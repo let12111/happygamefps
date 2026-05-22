@@ -57,6 +57,7 @@ Located in Game/Managers/ and Gameplay/Managers/:
 - PlayerWeaponsManager: Weapon switching, aiming, firing logic, ammo management
 - ObjectiveManager: Objective tracking and completion
 - AudioManager: Master audio volume control
+- GameObjectPoolManager: Generic GameObject object pool (see Object Pooling section)
 
 ### 3. Player Systems (Gameplay/)
 
@@ -194,10 +195,43 @@ Key Unity packages (Packages/manifest.json):
 
 All via Package Manager; no external NuGet.
 
+## Object Pooling
+
+**Files**: `Game/Managers/GameObjectPoolManager.cs`, `Game/PooledObject.cs`, `Game/PooledParticleAutoRelease.cs`
+
+`GameObjectPoolManager` is a lazy-created singleton (auto-instantiates on first use, no scene setup needed). It wraps Unity's `ObjectPool<GameObject>` with a per-prefab dictionary keyed by `GetInstanceID()`.
+
+**API**:
+- `GameObjectPoolManager.Instance.Get(prefab, position, rotation)` — get from pool (or instantiate)
+- `GameObjectPoolManager.Instance.Release(instance)` — return to pool via `PooledObject` component
+- `GameObjectPoolManager.Instance.ReleaseDelayed(instance, delay)` — timed release via coroutine
+
+**How pooled objects work**:
+- On `Get`: object is unparented, positioned in world space, activated
+- On `Release`: object is re-parented under `GameObjectPoolManager` in hierarchy, deactivated (appears nested/hidden, not at scene root)
+- `PooledObject` component (added automatically) stores the `PrefabId` so any instance can return itself to the correct pool
+
+**Particle VFX auto-release**:
+- If the prefab has a `ParticleSystem` (checked via `GetComponentInChildren`), `PooledParticleAutoRelease` is added automatically
+- It replays particles on `OnEnable` and returns the object to pool when `IsAlive` goes false — no manual lifetime management needed
+
+**Currently pooled**:
+- Impact VFX (e.g. `VFX_LazerSparksRed`) — auto-released by `PooledParticleAutoRelease`
+- Muzzle flash — auto-released by `PooledParticleAutoRelease` if has ParticleSystem, else `ReleaseDelayed(2f)`
+- Projectiles (`ProjectileBase` subclasses) — returned on hit or max lifetime; `OnDisable` unsubscribes `OnShoot` to prevent accumulation on reuse
+
+**Projectile-specific notes**:
+- `m_Returned` flag prevents double-release if hit and max lifetime fire simultaneously
+- `Physics.SphereCastNonAlloc` with static `s_HitBuffer[16]` — no per-frame array allocation
+- `m_IgnoredColliders` list is reused (`Clear()`) rather than reallocated each shot
+
+**Shell casings** use a separate `Queue<Rigidbody>` pool inside `WeaponAmmoModule` (predates `GameObjectPoolManager`).
+
 ## Performance Considerations
 
 - **Mesh Combining** (MeshCombiner.cs): Reduces draw calls for static geometry
-- **Shell Casing Pooling**: ShellPoolSize parameter prevents allocations
+- **Object Pooling**: GameObjectPoolManager pools projectiles, VFX, and muzzle flashes — see Object Pooling section
+- **Shell Casing Pooling**: ShellPoolSize parameter in WeaponAmmoModule prevents allocations
 - **Physics Layers**: Specific GroundCheckLayers for efficient raycasts
 - **NavMesh**: Pre-baked for static levels; PathReachingRadius tunable per enemy
 
