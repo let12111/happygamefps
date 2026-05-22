@@ -1,0 +1,50 @@
+# =========================
+# Unity generated folders
+# =========================
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Ll]ogs/
+[Bb]uild/
+[Bb]uilds/
+[Uu]ser[Ss]ettings/
+
+# Cache / local artifacts
+Packages/PackageCache/
+Packages/packages-lock.json.bak
+
+# =========================
+# IDE (but KEEP solution/project files)
+# =========================
+.vs/
+.idea/
+
+# Rider / VS local cache only
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.opendb
+*.VC.db
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Builds / exports
+# =========================
+*.apk
+*.aab
+*.unitypackage
+*.exe
+*.dll
+
+# =========================
+# Optional local tools
+# =========================
+.claude/settings.local.json
