@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\FPS\Scripts\Game\Shared\Damageable.cs" />
+    <Compile Include="Assets\FPS\Scripts\Game\Shared\WeaponChargeModule.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\IgnoreHitDetection.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\DebugUtility.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\Shared\Health.cs" />
@@ -57,6 +58,7 @@
     <Compile Include="Assets\FPS\Scripts\Game\MeshCombiner.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\MeshCombineUtility.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\AudioUtility.cs" />
+    <Compile Include="Assets\FPS\Scripts\Game\Shared\WeaponAudioModule.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\Shared\DamageArea.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\ConstantRotation.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\MinMaxParameters.cs" />
@@ -67,6 +69,7 @@
     <Compile Include="Assets\FPS\Scripts\Game\GameConstants.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\Managers\EventManager.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\Managers\AudioManager.cs" />
+    <Compile Include="Assets\FPS\Scripts\Game\Shared\WeaponAmmoModule.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\Shared\Objective.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\Managers\ObjectiveManager.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\Events.cs" />

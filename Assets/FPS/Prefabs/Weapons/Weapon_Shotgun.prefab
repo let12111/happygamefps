@@ -107,6 +107,9 @@ GameObject:
   - component: {fileID: 8323776800172828795}
   - component: {fileID: 8745372878802205896}
   - component: {fileID: 8090847488450120274}
+  - component: {fileID: 4444444444444444444}
+  - component: {fileID: 5555555555555555555}
+  - component: {fileID: 6666666666666666666}
   m_Layer: 10
   m_Name: Weapon_Shotgun
   m_TagString: Untagged
@@ -163,6 +166,22 @@ MonoBehaviour:
   RecoilForce: 1
   AimZoomRatio: 0.7
   AimOffset: {x: 0, y: 0.13, z: 0}
+  WeaponAnimator: {fileID: 0}
+  MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 4f5d4e5eaa0e5104791549cea3dc3f23,
+    type: 3}
+  UnparentMuzzleFlash: 0
+--- !u!114 &4444444444444444444
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2225486910712267859}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 901ea46c33f84d22bf0936f3ad0f73b5, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
   AutomaticReload: 1
   HasPhysicalBullets: 0
   ClipSize: 30
@@ -173,14 +192,34 @@ MonoBehaviour:
   AmmoReloadRate: 1.1
   AmmoReloadDelay: 1
   MaxAmmo: 2
+--- !u!114 &5555555555555555555
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2225486910712267859}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2f682c28f23433684ef6ee34f254ebc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
   AutomaticReleaseOnCharged: 0
   MaxChargeDuration: 1
   AmmoUsedOnStartCharge: 0
   AmmoUsageRateWhileCharging: 1
-  WeaponAnimator: {fileID: 0}
-  MuzzleFlashPrefab: {fileID: 748781637555137343, guid: 4f5d4e5eaa0e5104791549cea3dc3f23,
-    type: 3}
-  UnparentMuzzleFlash: 0
+--- !u!114 &6666666666666666666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2225486910712267859}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a80a3d55013e4c05875274022b021179, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
   ShootSfx: {fileID: 8300000, guid: be87267ec54c5264daffd2ffeb91d6a7, type: 3}
   ChangeWeaponSfx: {fileID: 8300000, guid: 7b83d61917ac1224f942a0609b1221f2, type: 3}
   UseContinuousShootSound: 0
