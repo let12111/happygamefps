@@ -86,14 +86,6 @@ namespace Unity.FPS.Game
                 audioSource.outputAudioMixerGroup = AudioUtility.GetAudioGroup(AudioUtility.AudioGroups.HUDVictory);
                 audioSource.PlayScheduled(AudioSettings.dspTime + DelayBeforeWinMessage);
 
-                // create a game message
-                //var message = Instantiate(WinGameMessagePrefab).GetComponent<DisplayMessage>();
-                //if (message)
-                //{
-                //    message.delayBeforeShowing = delayBeforeWinMessage;
-                //    message.GetComponent<Transform>().SetAsLastSibling();
-                //}
-
                 DisplayMessageEvent displayMessage = Events.DisplayMessageEvent;
                 displayMessage.Message = WinGameMessage;
                 displayMessage.DelayBeforeDisplay = DelayBeforeWinMessage;

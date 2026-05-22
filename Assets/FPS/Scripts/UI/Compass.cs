@@ -35,7 +35,6 @@ namespace Unity.FPS.UI
 
         void Update()
         {
-            // this is all very WIP, and needs to be reworked
             Vector3 playerPosition = m_PlayerTransform.position;
             Vector3 playerForwardFlat = Vector3.ProjectOnPlane(m_PlayerTransform.forward, Vector3.up);
             float halfVisAngle = VisibilityAngle * 0.5f;

@@ -41,7 +41,6 @@ namespace Unity.FPS.UI
         void DisplayMessage(NotificationToast notification)
         {
             DisplayMessageRect.UpdateTable(notification.gameObject);
-            //StartCoroutine(MessagePrefab.ReturnWithDelay(notification.gameObject, notification.TotalRunTime));
         }
 
         void OnDestroy()

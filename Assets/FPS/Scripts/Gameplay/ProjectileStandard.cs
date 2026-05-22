@@ -103,16 +103,16 @@ namespace Unity.FPS.Gameplay
             m_IgnoredColliders.AddRange(ownerColliders);
 
             // Handle case of player shooting (make projectiles not go through walls, and remember center-of-screen trajectory)
-            PlayerWeaponsManager playerWeaponsManager = m_ProjectileBase.Owner.GetComponent<PlayerWeaponsManager>();
-            if (playerWeaponsManager)
+            Camera ownerCamera = Camera.main;
+            if (ownerCamera != null && m_ProjectileBase.Owner.GetComponent<PlayerCharacterController>() != null)
             {
                 m_HasTrajectoryOverride = true;
 
                 Vector3 cameraToMuzzle = (m_ProjectileBase.InitialPosition -
-                                          playerWeaponsManager.WeaponCamera.transform.position);
+                                          ownerCamera.transform.position);
 
                 m_TrajectoryCorrectionVector = Vector3.ProjectOnPlane(-cameraToMuzzle,
-                    playerWeaponsManager.WeaponCamera.transform.forward);
+                    ownerCamera.transform.forward);
                 if (TrajectoryCorrectionDistance == 0)
                 {
                     transform.position += m_TrajectoryCorrectionVector;
@@ -123,7 +123,7 @@ namespace Unity.FPS.Gameplay
                     m_HasTrajectoryOverride = false;
                 }
 
-                if (Physics.Raycast(playerWeaponsManager.WeaponCamera.transform.position, cameraToMuzzle.normalized,
+                if (Physics.Raycast(ownerCamera.transform.position, cameraToMuzzle.normalized,
                     out RaycastHit hit, cameraToMuzzle.magnitude, HittableLayers, k_TriggerInteraction))
                 {
                     if (IsHitValid(hit))
