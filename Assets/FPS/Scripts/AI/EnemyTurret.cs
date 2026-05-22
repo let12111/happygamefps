@@ -123,7 +123,7 @@ namespace Unity.FPS.AI
         {
             if (RandomHitSparks.Length > 0)
             {
-                int n = Random.Range(0, RandomHitSparks.Length - 1);
+                int n = Random.Range(0, RandomHitSparks.Length);
                 RandomHitSparks[n].Play();
             }
 
