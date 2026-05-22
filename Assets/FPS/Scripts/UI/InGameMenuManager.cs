@@ -164,5 +164,18 @@ namespace Unity.FPS.UI
         {
             ControlImage.SetActive(show);
         }
+
+        void OnDestroy()
+        {
+            LookSensitivitySlider.onValueChanged.RemoveListener(OnMouseSensitivityChanged);
+            ShadowsToggle.onValueChanged.RemoveListener(OnShadowsChanged);
+            InvincibilityToggle.onValueChanged.RemoveListener(OnInvincibilityChanged);
+            FramerateToggle.onValueChanged.RemoveListener(OnFramerateCounterChanged);
+
+            m_SubmitAction?.Disable();
+            m_CancelAction?.Disable();
+            m_NavigateAction?.Disable();
+            m_MenuAction?.Disable();
+        }
     }
 }

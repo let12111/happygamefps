@@ -65,6 +65,11 @@ namespace Unity.FPS.Gameplay
         List<Collider> m_IgnoredColliders;
         bool m_Returned;
 
+        Camera m_Camera;
+        GameObject m_CachedOwner;
+        Collider[] m_CachedOwnerColliders;
+        bool m_IsPlayerOwner;
+
         // Shared buffer — projectiles update sequentially on main thread
         static readonly RaycastHit[] s_HitBuffer = new RaycastHit[16];
 
@@ -74,6 +79,7 @@ namespace Unity.FPS.Gameplay
         {
             m_ProjectileBase = GetComponent<ProjectileBase>();
             m_IgnoredColliders = new List<Collider>();
+            m_Camera = Camera.main;
         }
 
         void OnEnable()
@@ -98,21 +104,26 @@ namespace Unity.FPS.Gameplay
             m_IgnoredColliders.Clear();
             transform.position += m_ProjectileBase.InheritedMuzzleVelocity * Time.deltaTime;
 
-            // Ignore colliders of owner
-            Collider[] ownerColliders = m_ProjectileBase.Owner.GetComponentsInChildren<Collider>();
-            m_IgnoredColliders.AddRange(ownerColliders);
+            // Re-fetch owner colliders only when owner changes (avoids GetComponentsInChildren every shot)
+            GameObject owner = m_ProjectileBase.Owner;
+            if (owner != m_CachedOwner)
+            {
+                m_CachedOwner = owner;
+                m_CachedOwnerColliders = owner.GetComponentsInChildren<Collider>();
+                m_IsPlayerOwner = owner.GetComponent<PlayerCharacterController>() != null;
+            }
+            m_IgnoredColliders.AddRange(m_CachedOwnerColliders);
 
             // Handle case of player shooting (make projectiles not go through walls, and remember center-of-screen trajectory)
-            Camera ownerCamera = Camera.main;
-            if (ownerCamera != null && m_ProjectileBase.Owner.GetComponent<PlayerCharacterController>() != null)
+            if (m_Camera != null && m_IsPlayerOwner)
             {
                 m_HasTrajectoryOverride = true;
 
                 Vector3 cameraToMuzzle = (m_ProjectileBase.InitialPosition -
-                                          ownerCamera.transform.position);
+                                          m_Camera.transform.position);
 
                 m_TrajectoryCorrectionVector = Vector3.ProjectOnPlane(-cameraToMuzzle,
-                    ownerCamera.transform.forward);
+                    m_Camera.transform.forward);
                 if (TrajectoryCorrectionDistance == 0)
                 {
                     transform.position += m_TrajectoryCorrectionVector;
@@ -123,7 +134,7 @@ namespace Unity.FPS.Gameplay
                     m_HasTrajectoryOverride = false;
                 }
 
-                if (Physics.Raycast(ownerCamera.transform.position, cameraToMuzzle.normalized,
+                if (Physics.Raycast(m_Camera.transform.position, cameraToMuzzle.normalized,
                     out RaycastHit hit, cameraToMuzzle.magnitude, HittableLayers, k_TriggerInteraction))
                 {
                     if (IsHitValid(hit))

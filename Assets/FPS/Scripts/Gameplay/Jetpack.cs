@@ -67,6 +67,12 @@ namespace Unity.FPS.Gameplay
 
             AudioSource.clip = JetpackSfx;
             AudioSource.loop = true;
+
+            for (int i = 0; i < JetpackVfx.Length; i++)
+            {
+                var emission = JetpackVfx[i].emission;
+                emission.enabled = false;
+            }
         }
 
         void Update()
