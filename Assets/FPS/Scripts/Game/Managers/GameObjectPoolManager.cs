@@ -20,7 +20,6 @@ namespace Unity.FPS.Game
                     {
                         var go = new GameObject("GameObjectPoolManager");
                         s_Instance = go.AddComponent<GameObjectPoolManager>();
-                        DontDestroyOnLoad(go);
                     }
                 }
                 return s_Instance;
@@ -38,13 +37,18 @@ namespace Unity.FPS.Game
                 return;
             }
             s_Instance = this;
-            DontDestroyOnLoad(gameObject);
+        }
+
+        void OnDestroy()
+        {
+            if (s_Instance == this)
+                s_Instance = null;
         }
 
         public GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation)
         {
-            var pool = GetOrCreatePool(prefab);
-            var obj = pool.Get();
+            var obj = GetOrCreatePool(prefab).Get();
+            obj.transform.SetParent(null);
             obj.transform.SetPositionAndRotation(position, rotation);
             return obj;
         }
@@ -81,7 +85,7 @@ namespace Unity.FPS.Game
                     actionOnGet: obj => obj.SetActive(true),
                     actionOnRelease: obj =>
                     {
-                        obj.transform.SetParent(null);
+                        obj.transform.SetParent(transform);
                         obj.SetActive(false);
                     },
                     actionOnDestroy: obj => Destroy(obj),
@@ -96,9 +100,9 @@ namespace Unity.FPS.Game
 
         GameObject CreatePooledInstance(int prefabId)
         {
-            var obj = Instantiate(m_Prefabs[prefabId]);
+            var obj = Instantiate(m_Prefabs[prefabId], transform);
             obj.AddComponent<PooledObject>().PrefabId = prefabId;
-            if (obj.GetComponent<ParticleSystem>() != null)
+            if (obj.GetComponentInChildren<ParticleSystem>() != null)
                 obj.AddComponent<PooledParticleAutoRelease>();
             return obj;
         }

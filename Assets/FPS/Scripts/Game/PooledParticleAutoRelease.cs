@@ -5,13 +5,11 @@ namespace Unity.FPS.Game
     public class PooledParticleAutoRelease : MonoBehaviour
     {
         ParticleSystem m_ParticleSystem;
-        PooledObject m_PooledObject;
         bool m_IsPlaying;
 
         void Awake()
         {
-            m_ParticleSystem = GetComponent<ParticleSystem>();
-            m_PooledObject = GetComponent<PooledObject>();
+            m_ParticleSystem = GetComponentInChildren<ParticleSystem>();
         }
 
         void OnEnable()
