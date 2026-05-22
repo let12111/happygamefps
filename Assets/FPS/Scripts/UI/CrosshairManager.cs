@@ -9,7 +9,7 @@ namespace Unity.FPS.UI
     {
         public Image CrosshairImage;
         public Sprite NullCrosshairSprite;
-        public float CrosshairUpdateshrpness = 5f;
+        public float CrosshairUpdateSharpness = 5f;
 
         PlayerWeaponsManager m_WeaponsManager;
         bool m_WasPointingAtEnemy;
@@ -53,11 +53,11 @@ namespace Unity.FPS.UI
             }
 
             CrosshairImage.color = Color.Lerp(CrosshairImage.color, m_CurrentCrosshair.CrosshairColor,
-                Time.deltaTime * CrosshairUpdateshrpness);
+                Time.deltaTime * CrosshairUpdateSharpness);
 
             m_CrosshairRectTransform.sizeDelta = Mathf.Lerp(m_CrosshairRectTransform.sizeDelta.x,
                 m_CurrentCrosshair.CrosshairSize,
-                Time.deltaTime * CrosshairUpdateshrpness) * Vector2.one;
+                Time.deltaTime * CrosshairUpdateSharpness) * Vector2.one;
         }
 
         void OnWeaponChanged(WeaponController newWeapon)

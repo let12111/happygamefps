@@ -10,7 +10,7 @@ namespace Unity.FPS.Gameplay
         public float LookSensitivity = 1f;
 
         [Tooltip("Additional sensitivity multiplier for WebGL")]
-        public float WebglLookSensitivityMultiplier = 0.25f;
+        public float WebGLLookSensitivityMultiplier = 0.25f;
 
         [Tooltip("Limit to consider an input when using a trigger on a controller")]
         public float TriggerAxisThreshold = 0.4f;
@@ -107,7 +107,7 @@ namespace Unity.FPS.Gameplay
             
 #if UNITY_WEBGL
             // Mouse tends to be even more sensitive in WebGL due to mouse acceleration, so reduce it even more
-            input *= WebglLookSensitivityMultiplier;
+            input *= WebGLLookSensitivityMultiplier;
 #endif
 
             return input;
@@ -127,7 +127,7 @@ namespace Unity.FPS.Gameplay
             
 #if UNITY_WEBGL
             // Mouse tends to be even more sensitive in WebGL due to mouse acceleration, so reduce it even more
-            input *= WebglLookSensitivityMultiplier;
+            input *= WebGLLookSensitivityMultiplier;
 #endif
 
             return input;

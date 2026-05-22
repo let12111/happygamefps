@@ -26,7 +26,7 @@ namespace Unity.FPS.UI
         public float DamageFlashMaxAlpha = 1f;
 
         [Header("Critical health")] [Tooltip("Max alpha of the critical vignette")]
-        public float CriticaHealthVignetteMaxAlpha = .8f;
+        public float CriticalHealthVignetteMaxAlpha = .8f;
 
         [Tooltip("Frequency at which the vignette will pulse when at critical health")]
         public float PulsatingVignetteFrequency = 4f;
@@ -70,7 +70,7 @@ namespace Unity.FPS.UI
                 VignetteCanvasGroup.gameObject.SetActive(true);
                 float vignetteAlpha =
                     (1 - (m_PlayerHealth.CurrentHealth / m_PlayerHealth.MaxHealth /
-                          m_PlayerHealth.CriticalHealthRatio)) * CriticaHealthVignetteMaxAlpha;
+                          m_PlayerHealth.CriticalHealthRatio)) * CriticalHealthVignetteMaxAlpha;
 
                 if (m_GameFlowManager.GameIsEnding)
                     VignetteCanvasGroup.alpha = vignetteAlpha;

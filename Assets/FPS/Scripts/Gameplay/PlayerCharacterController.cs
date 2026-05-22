@@ -82,7 +82,7 @@ namespace Unity.FPS.Gameplay
 
         [Header("Fall Damage")]
         [Tooltip("Whether the player will recieve damage when hitting the ground at high speed")]
-        public bool RecievesFallDamage;
+        public bool ReceivesFallDamage;
 
         [Tooltip("Minimun fall speed for recieving fall damage")]
         public float MinSpeedForFallDamage = 10f;
@@ -190,7 +190,7 @@ namespace Unity.FPS.Gameplay
                 float fallSpeed = -Mathf.Min(CharacterVelocity.y, m_LatestImpactSpeed.y);
                 float fallSpeedRatio = (fallSpeed - MinSpeedForFallDamage) /
                                        (MaxSpeedForFallDamage - MinSpeedForFallDamage);
-                if (RecievesFallDamage && fallSpeedRatio > 0f)
+                if (ReceivesFallDamage && fallSpeedRatio > 0f)
                 {
                     float dmgFromFall = Mathf.Lerp(FallDamageAtMinSpeed, FallDamageAtMaxSpeed, fallSpeedRatio);
                     m_Health.TakeDamage(dmgFromFall, null);
