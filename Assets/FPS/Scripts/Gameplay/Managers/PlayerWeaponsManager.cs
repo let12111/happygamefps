@@ -73,6 +73,9 @@ namespace Unity.FPS.Gameplay
         [Tooltip("Layer to set FPS weapon gameObjects to")]
         public LayerMask FpsWeaponLayer;
 
+        [Tooltip("Layers checked when detecting enemies for crosshair color change (exclude geometry-only layers for best performance)")]
+        public LayerMask EnemyDetectionLayerMask = -1;
+
         public bool IsAiming { get; private set; }
         public bool IsPointingAtEnemy { get; private set; }
         public int ActiveWeaponIndex { get; private set; }
@@ -180,7 +183,7 @@ namespace Unity.FPS.Gameplay
             if (activeWeapon)
             {
                 if (Physics.Raycast(WeaponCamera.transform.position, WeaponCamera.transform.forward, out RaycastHit hit,
-                    1000, -1, QueryTriggerInteraction.Ignore))
+                    1000, EnemyDetectionLayerMask, QueryTriggerInteraction.Ignore))
                 {
                     if (hit.collider.GetComponentInParent<Health>() != null)
                     {

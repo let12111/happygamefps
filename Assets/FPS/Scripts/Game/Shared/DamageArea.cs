@@ -14,28 +14,28 @@ namespace Unity.FPS.Game
         [Header("Debug")] [Tooltip("Color of the area of effect radius")]
         public Color AreaOfEffectColor = Color.red * 0.5f;
 
+        static readonly Collider[] s_OverlapBuffer = new Collider[64];
+        readonly Dictionary<Health, Damageable> m_UniqueHealths = new Dictionary<Health, Damageable>();
+
         public void InflictDamageInArea(float damage, Vector3 center, LayerMask layers,
             QueryTriggerInteraction interaction, GameObject owner)
         {
-            Dictionary<Health, Damageable> uniqueDamagedHealths = new Dictionary<Health, Damageable>();
+            m_UniqueHealths.Clear();
 
-            // Create a collection of unique health components that would be damaged in the area of effect (in order to avoid damaging a same entity multiple times)
-            Collider[] affectedColliders = Physics.OverlapSphere(center, AreaOfEffectDistance, layers, interaction);
-            foreach (var coll in affectedColliders)
+            int count = Physics.OverlapSphereNonAlloc(center, AreaOfEffectDistance, s_OverlapBuffer, layers, interaction);
+            for (int i = 0; i < count; i++)
             {
-                Damageable damageable = coll.GetComponent<Damageable>();
+                Damageable damageable = s_OverlapBuffer[i].GetComponent<Damageable>();
                 if (damageable)
                 {
                     Health health = damageable.GetComponentInParent<Health>();
-                    if (health && !uniqueDamagedHealths.ContainsKey(health))
-                    {
-                        uniqueDamagedHealths.Add(health, damageable);
-                    }
+                    if (health && !m_UniqueHealths.ContainsKey(health))
+                        m_UniqueHealths.Add(health, damageable);
                 }
             }
 
             // Apply damages with distance falloff
-            foreach (Damageable uniqueDamageable in uniqueDamagedHealths.Values)
+            foreach (Damageable uniqueDamageable in m_UniqueHealths.Values)
             {
                 float distance = Vector3.Distance(uniqueDamageable.transform.position, transform.position);
                 uniqueDamageable.InflictDamage(

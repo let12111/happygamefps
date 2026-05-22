@@ -112,6 +112,8 @@ namespace Unity.FPS.AI
         Collider[] m_SelfColliders;
         GameFlowManager m_GameFlowManager;
         bool m_WasDamagedThisFrame;
+        float m_NextDetectionTime;
+        bool m_FlashActive;
         float m_LastTimeWeaponSwapped = Mathf.NegativeInfinity;
         int m_CurrentWeaponIndex;
         WeaponController m_CurrentWeapon;
@@ -189,6 +191,13 @@ namespace Unity.FPS.AI
             }
 
             m_BodyFlashMaterialPropertyBlock = new MaterialPropertyBlock();
+            // Set initial body emission to the gradient's rest state (t=1)
+            if (m_BodyRenderers.Count > 0)
+            {
+                m_BodyFlashMaterialPropertyBlock.SetColor("_EmissionColor", OnHitBodyGradient.Evaluate(1f));
+                foreach (var data in m_BodyRenderers)
+                    data.Renderer.SetPropertyBlock(m_BodyFlashMaterialPropertyBlock, data.MaterialIndex);
+            }
 
             // Check if we have an eye renderer for this enemy
             if (m_EyeRendererData.Renderer != null)
@@ -204,13 +213,20 @@ namespace Unity.FPS.AI
         {
             EnsureIsWithinLevelBounds();
 
-            DetectionModule.HandleTargetDetection(m_Actor, m_SelfColliders);
-
-            Color currentColor = OnHitBodyGradient.Evaluate((Time.time - m_LastTimeDamaged) / FlashOnHitDuration);
-            m_BodyFlashMaterialPropertyBlock.SetColor("_EmissionColor", currentColor);
-            foreach (var data in m_BodyRenderers)
+            if (Time.time >= m_NextDetectionTime)
             {
-                data.Renderer.SetPropertyBlock(m_BodyFlashMaterialPropertyBlock, data.MaterialIndex);
+                DetectionModule.HandleTargetDetection(m_Actor, m_SelfColliders);
+                m_NextDetectionTime = Time.time + 0.1f;
+            }
+
+            if (m_FlashActive)
+            {
+                float ratio = Mathf.Min((Time.time - m_LastTimeDamaged) / FlashOnHitDuration, 1f);
+                m_BodyFlashMaterialPropertyBlock.SetColor("_EmissionColor", OnHitBodyGradient.Evaluate(ratio));
+                foreach (var data in m_BodyRenderers)
+                    data.Renderer.SetPropertyBlock(m_BodyFlashMaterialPropertyBlock, data.MaterialIndex);
+                if (ratio >= 1f)
+                    m_FlashActive = false;
             }
 
             m_WasDamagedThisFrame = false;
@@ -354,6 +370,7 @@ namespace Unity.FPS.AI
                     AudioUtility.CreateSFX(DamageTick, transform.position, AudioUtility.AudioGroups.DamageTick, 0f);
             
                 m_WasDamagedThisFrame = true;
+                m_FlashActive = true;
             }
         }
 

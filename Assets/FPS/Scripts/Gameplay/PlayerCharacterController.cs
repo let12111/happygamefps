@@ -130,6 +130,8 @@ namespace Unity.FPS.Gameplay
         float m_FootstepDistanceCounter;
         float m_TargetCharacterHeight;
 
+        static readonly Collider[] s_StandingOverlapBuffer = new Collider[8];
+
         const float k_JumpGroundingPreventionTime = 0.2f;
         const float k_GroundCheckDistanceInAir = 0.07f;
 
@@ -447,18 +449,17 @@ namespace Unity.FPS.Gameplay
                 // Detect obstructions
                 if (!ignoreObstructions)
                 {
-                    Collider[] standingOverlaps = Physics.OverlapCapsule(
+                    int overlapCount = Physics.OverlapCapsuleNonAlloc(
                         GetCapsuleBottomHemisphere(),
                         GetCapsuleTopHemisphere(CapsuleHeightStanding),
                         m_Controller.radius,
+                        s_StandingOverlapBuffer,
                         -1,
                         QueryTriggerInteraction.Ignore);
-                    foreach (Collider c in standingOverlaps)
+                    for (int i = 0; i < overlapCount; i++)
                     {
-                        if (c != m_Controller)
-                        {
+                        if (s_StandingOverlapBuffer[i] != m_Controller)
                             return false;
-                        }
                     }
                 }
 

@@ -234,6 +234,13 @@ All via Package Manager; no external NuGet.
 - **Shell Casing Pooling**: ShellPoolSize parameter in WeaponAmmoModule prevents allocations
 - **Physics Layers**: Specific GroundCheckLayers for efficient raycasts
 - **NavMesh**: Pre-baked for static levels; PathReachingRadius tunable per enemy
+- **NonAlloc Physics Pattern**: All overlap and raycast calls use NonAlloc variants with static buffers to eliminate per-call GC allocations. Follow this convention for any new physics code:
+  - `DetectionModule` — `static RaycastHit[] s_RaycastBuffer[16]` for line-of-sight checks
+  - `DamageArea` — `static Collider[] s_OverlapBuffer[64]` for explosion radius
+  - `PlayerCharacterController` — `static Collider[] s_StandingOverlapBuffer[8]` for crouch checks
+- **Enemy Detection Throttle**: `EnemyController.Update()` calls `DetectionModule.HandleTargetDetection()` at most 10×/sec (interval 0.1s via `m_NextDetectionTime`). Detection is intentionally not frame-perfect — do not remove the throttle without profiling.
+- **Camera.main Caching**: Never access `Camera.main` in `Update()` — it internally calls `FindWithTag`. Cache it in `Start()` (see `WorldspaceHealthBar`).
+- **Body Flash Rendering**: `EnemyController` only calls `SetPropertyBlock` during the active hit-flash period (`m_FlashActive`). The flag is set in `OnDamaged` and cleared when the gradient completes (ratio ≥ 1).
 
 ## Extension Points
 

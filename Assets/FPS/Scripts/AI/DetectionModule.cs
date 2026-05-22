@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using Unity.FPS.Game;
+﻿using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -34,6 +33,8 @@ namespace Unity.FPS.AI
 
         ActorsManager m_ActorsManager;
 
+        static readonly RaycastHit[] s_RaycastBuffer = new RaycastHit[16];
+
         const string k_AnimAttackParameter = "Attack";
         const string k_AnimOnDamagedParameter = "OnDamaged";
 
@@ -63,15 +64,21 @@ namespace Unity.FPS.AI
                     if (sqrDistance < sqrDetectionRange && sqrDistance < closestSqrDistance)
                     {
                         // Check for obstructions
-                        RaycastHit[] hits = Physics.RaycastAll(DetectionSourcePoint.position,
-                            (otherActor.AimPoint.position - DetectionSourcePoint.position).normalized, DetectionRange,
-                            -1, QueryTriggerInteraction.Ignore);
+                        int hitCount = Physics.RaycastNonAlloc(DetectionSourcePoint.position,
+                            (otherActor.AimPoint.position - DetectionSourcePoint.position).normalized,
+                            s_RaycastBuffer, DetectionRange, -1, QueryTriggerInteraction.Ignore);
                         RaycastHit closestValidHit = new RaycastHit();
                         closestValidHit.distance = Mathf.Infinity;
                         bool foundValidHit = false;
-                        foreach (var hit in hits)
+                        for (int i = 0; i < hitCount; i++)
                         {
-                            if (!selfColliders.Contains(hit.collider) && hit.distance < closestValidHit.distance)
+                            var hit = s_RaycastBuffer[i];
+                            bool isSelf = false;
+                            for (int j = 0; j < selfColliders.Length; j++)
+                            {
+                                if (selfColliders[j] == hit.collider) { isSelf = true; break; }
+                            }
+                            if (!isSelf && hit.distance < closestValidHit.distance)
                             {
                                 closestValidHit = hit;
                                 foundValidHit = true;
