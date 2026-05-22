@@ -22,11 +22,26 @@ namespace Unity.FPS.UI
             m_PlayerHealth = playerCharacterController.GetComponent<Health>();
             DebugUtility.HandleErrorIfNullGetComponent<Health, PlayerHealthBar>(m_PlayerHealth, this,
                 playerCharacterController.gameObject);
+
+            m_PlayerHealth.OnDamaged += OnHealthChanged;
+            m_PlayerHealth.OnHealed += OnHealthHealed;
+            UpdateHealthBar();
         }
 
-        void Update()
+        void OnDestroy()
         {
-            // update health bar value
+            if (m_PlayerHealth != null)
+            {
+                m_PlayerHealth.OnDamaged -= OnHealthChanged;
+                m_PlayerHealth.OnHealed -= OnHealthHealed;
+            }
+        }
+
+        void OnHealthChanged(float amount, GameObject source) => UpdateHealthBar();
+        void OnHealthHealed(float amount) => UpdateHealthBar();
+
+        void UpdateHealthBar()
+        {
             HealthFillImage.fillAmount = m_PlayerHealth.CurrentHealth / m_PlayerHealth.MaxHealth;
         }
     }

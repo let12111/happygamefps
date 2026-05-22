@@ -25,17 +25,17 @@ namespace Unity.FPS.UI
 
         void Update()
         {
-            foreach (var message in m_PendingMessages)
+            for (int i = m_PendingMessages.Count - 1; i >= 0; i--)
             {
+                var message = m_PendingMessages[i];
                 if (Time.time - message.timestamp > message.delay)
                 {
                     message.Item4.Initialize(message.message);
                     DisplayMessage(message.notification);
                 }
+                if (message.notification.Initialized)
+                    m_PendingMessages.RemoveAt(i);
             }
-
-            // Clear deprecated messages
-            m_PendingMessages.RemoveAll(x => x.notification.Initialized);
         }
 
         void DisplayMessage(NotificationToast notification)

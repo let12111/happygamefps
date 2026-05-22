@@ -63,18 +63,15 @@ namespace Unity.FPS.UI
         {
             if (m_ObjectivesDictionnary.TryGetValue(evt.Objective, out ObjectiveToast toast) && toast != null)
             {
-                // set the new updated description for the objective, and forces the content size fitter to be recalculated
-                Canvas.ForceUpdateCanvases();
                 if (!string.IsNullOrEmpty(evt.DescriptionText))
                     toast.DescriptionTextContent.text = evt.DescriptionText;
 
                 if (!string.IsNullOrEmpty(evt.CounterText))
                     toast.CounterTextContent.text = evt.CounterText;
 
-                if (toast.GetComponent<RectTransform>())
-                {
-                    UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(toast.GetComponent<RectTransform>());
-                }
+                RectTransform toastRect = toast.GetComponent<RectTransform>();
+                if (toastRect != null)
+                    UnityEngine.UI.LayoutRebuilder.MarkLayoutForRebuild(toastRect);
             }
         }
 

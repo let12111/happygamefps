@@ -47,6 +47,7 @@ namespace Unity.FPS.UI
 
         PlayerWeaponsManager m_PlayerWeaponsManager;
         WeaponController m_Weapon;
+        int m_LastPhysicalBullets = -1;
 
         void Awake()
         {
@@ -57,7 +58,8 @@ namespace Unity.FPS.UI
         {
             if (evt.Weapon == m_Weapon)
             {
-                BulletCounter.text = m_Weapon.GetCarriedPhysicalBullets().ToString();
+                m_LastPhysicalBullets = m_Weapon.GetCarriedPhysicalBullets();
+                BulletCounter.text = m_LastPhysicalBullets.ToString();
             }
         }
 
@@ -69,7 +71,10 @@ namespace Unity.FPS.UI
             if (!weapon.HasPhysicalBullets)
                 BulletCounter.transform.parent.gameObject.SetActive(false);
             else
-                BulletCounter.text = weapon.GetCarriedPhysicalBullets().ToString();
+            {
+                m_LastPhysicalBullets = weapon.GetCarriedPhysicalBullets();
+                BulletCounter.text = m_LastPhysicalBullets.ToString();
+            }
 
             Reload.gameObject.SetActive(false);
             m_PlayerWeaponsManager = FindAnyObjectByType<PlayerWeaponsManager>();
@@ -86,7 +91,15 @@ namespace Unity.FPS.UI
             AmmoFillImage.fillAmount = Mathf.Lerp(AmmoFillImage.fillAmount, currenFillRatio,
                 Time.deltaTime * AmmoFillMovementSharpness);
 
-            BulletCounter.text = m_Weapon.GetCarriedPhysicalBullets().ToString();
+            if (m_Weapon.HasPhysicalBullets)
+            {
+                int currentBullets = m_Weapon.GetCarriedPhysicalBullets();
+                if (currentBullets != m_LastPhysicalBullets)
+                {
+                    m_LastPhysicalBullets = currentBullets;
+                    BulletCounter.text = currentBullets.ToString();
+                }
+            }
 
             bool isActiveWeapon = m_Weapon == m_PlayerWeaponsManager.GetActiveWeapon();
 

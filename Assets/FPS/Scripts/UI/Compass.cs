@@ -36,10 +36,15 @@ namespace Unity.FPS.UI
         void Update()
         {
             // this is all very WIP, and needs to be reworked
+            Vector3 playerPosition = m_PlayerTransform.position;
+            Vector3 playerForwardFlat = Vector3.ProjectOnPlane(m_PlayerTransform.forward, Vector3.up);
+            float halfVisAngle = VisibilityAngle * 0.5f;
+            float clampedHalfHeight = CompasRect.rect.height * 0.5f * CompasMarginRatio;
+
             foreach (var element in m_ElementsDictionnary)
             {
-                float distanceRatio = 1;
-                float heightDifference = 0;
+                float distanceRatio = 1f;
+                float heightDifference = 0f;
                 float angle;
 
                 if (element.Value.IsDirection)
@@ -49,22 +54,17 @@ namespace Unity.FPS.UI
                 }
                 else
                 {
-                    Vector3 targetDir = (element.Key.transform.position - m_PlayerTransform.position).normalized;
-                    targetDir = Vector3.ProjectOnPlane(targetDir, Vector3.up);
-                    Vector3 playerForward = Vector3.ProjectOnPlane(m_PlayerTransform.forward, Vector3.up);
-                    angle = Vector3.SignedAngle(playerForward, targetDir, Vector3.up);
+                    Vector3 directionVector = element.Key.transform.position - playerPosition;
+                    Vector3 dirFlat = Vector3.ProjectOnPlane(directionVector, Vector3.up).normalized;
+                    angle = Vector3.SignedAngle(playerForwardFlat, dirFlat, Vector3.up);
 
-                    Vector3 directionVector = element.Key.transform.position - m_PlayerTransform.position;
+                    heightDifference = Mathf.Clamp(directionVector.y * HeightDifferenceMultiplier,
+                        -clampedHalfHeight, clampedHalfHeight);
 
-                    heightDifference = (directionVector.y) * HeightDifferenceMultiplier;
-                    heightDifference = Mathf.Clamp(heightDifference, -CompasRect.rect.height / 2 * CompasMarginRatio,
-                        CompasRect.rect.height / 2 * CompasMarginRatio);
-
-                    distanceRatio = directionVector.magnitude / DistanceMinScale;
-                    distanceRatio = Mathf.Clamp01(distanceRatio);
+                    distanceRatio = Mathf.Clamp01(directionVector.magnitude / DistanceMinScale);
                 }
 
-                if (angle > -VisibilityAngle / 2 && angle < VisibilityAngle / 2)
+                if (angle > -halfVisAngle && angle < halfVisAngle)
                 {
                     element.Value.CanvasGroup.alpha = 1;
                     element.Value.CanvasGroup.transform.localPosition = new Vector2(m_WidthMultiplier * angle,

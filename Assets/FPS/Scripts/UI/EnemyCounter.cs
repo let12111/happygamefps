@@ -11,6 +11,8 @@ namespace Unity.FPS.UI
         public Text EnemiesText;
 
         EnemyManager m_EnemyManager;
+        int m_LastRemaining = -1;
+        int m_LastTotal = -1;
 
         void Awake()
         {
@@ -20,7 +22,14 @@ namespace Unity.FPS.UI
 
         void Update()
         {
-            EnemiesText.text = m_EnemyManager.NumberOfEnemiesRemaining + "/" + m_EnemyManager.NumberOfEnemiesTotal;
+            int remaining = m_EnemyManager.NumberOfEnemiesRemaining;
+            int total = m_EnemyManager.NumberOfEnemiesTotal;
+            if (remaining != m_LastRemaining || total != m_LastTotal)
+            {
+                m_LastRemaining = remaining;
+                m_LastTotal = total;
+                EnemiesText.text = $"{remaining}/{total}";
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Audio;
 
 namespace Unity.FPS.Game
@@ -6,6 +7,8 @@ namespace Unity.FPS.Game
     public class AudioUtility
     {
         static AudioManager s_AudioManager;
+        static readonly Dictionary<AudioGroups, AudioMixerGroup> s_AudioGroupCache =
+            new Dictionary<AudioGroups, AudioMixerGroup>();
 
         public enum AudioGroups
         {
@@ -41,16 +44,20 @@ namespace Unity.FPS.Game
 
         public static AudioMixerGroup GetAudioGroup(AudioGroups group)
         {
+            if (s_AudioGroupCache.TryGetValue(group, out AudioMixerGroup cached))
+                return cached;
+
             if (s_AudioManager == null)
                 s_AudioManager = Object.FindAnyObjectByType<AudioManager>();
 
             var groups = s_AudioManager.FindMatchingGroups(group.ToString());
+            AudioMixerGroup result = groups.Length > 0 ? groups[0] : null;
 
-            if (groups.Length > 0)
-                return groups[0];
+            if (result == null)
+                Debug.LogWarning("Didn't find audio group for " + group.ToString());
 
-            Debug.LogWarning("Didn't find audio group for " + group.ToString());
-            return null;
+            s_AudioGroupCache[group] = result;
+            return result;
         }
 
         public static void SetMasterVolume(float value)

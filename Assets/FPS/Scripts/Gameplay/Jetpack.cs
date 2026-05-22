@@ -39,6 +39,7 @@ namespace Unity.FPS.Gameplay
         public AudioClip JetpackSfx;
 
         bool m_CanUseJetpack;
+        bool m_VfxEnabled;
         PlayerCharacterController m_PlayerCharacterController;
         PlayerInputHandler m_InputHandler;
         float m_LastTimeOfUse;
@@ -106,10 +107,14 @@ namespace Unity.FPS.Gameplay
                 // consume fuel
                 CurrentFillRatio = CurrentFillRatio - (Time.deltaTime / ConsumeDuration);
 
-                for (int i = 0; i < JetpackVfx.Length; i++)
+                if (!m_VfxEnabled)
                 {
-                    var emissionModulesVfx = JetpackVfx[i].emission;
-                    emissionModulesVfx.enabled = true;
+                    m_VfxEnabled = true;
+                    for (int i = 0; i < JetpackVfx.Length; i++)
+                    {
+                        var emission = JetpackVfx[i].emission;
+                        emission.enabled = true;
+                    }
                 }
 
                 if (!AudioSource.isPlaying)
@@ -126,10 +131,14 @@ namespace Unity.FPS.Gameplay
                     CurrentFillRatio = CurrentFillRatio + Time.deltaTime * refillRate;
                 }
 
-                for (int i = 0; i < JetpackVfx.Length; i++)
+                if (m_VfxEnabled)
                 {
-                    var emissionModulesVfx = JetpackVfx[i].emission;
-                    emissionModulesVfx.enabled = false;
+                    m_VfxEnabled = false;
+                    for (int i = 0; i < JetpackVfx.Length; i++)
+                    {
+                        var emission = JetpackVfx[i].emission;
+                        emission.enabled = false;
+                    }
                 }
 
                 // keeps the ratio between 0 and 1

@@ -84,6 +84,8 @@ namespace Unity.FPS.Gameplay
         public UnityAction<WeaponController, int> OnAddedWeapon;
         public UnityAction<WeaponController, int> OnRemovedWeapon;
 
+        static readonly RaycastHit[] s_EnemyDetectionBuffer = new RaycastHit[16];
+
         WeaponController[] m_WeaponSlots = new WeaponController[9]; // 9 available weapon slots
         PlayerInputHandler m_InputHandler;
         PlayerCharacterController m_PlayerCharacterController;
@@ -182,14 +184,22 @@ namespace Unity.FPS.Gameplay
             IsPointingAtEnemy = false;
             if (activeWeapon)
             {
-                if (Physics.Raycast(WeaponCamera.transform.position, WeaponCamera.transform.forward, out RaycastHit hit,
-                    1000, EnemyDetectionLayerMask, QueryTriggerInteraction.Ignore))
+                int hitCount = Physics.RaycastNonAlloc(WeaponCamera.transform.position,
+                    WeaponCamera.transform.forward, s_EnemyDetectionBuffer, 1000f,
+                    EnemyDetectionLayerMask, QueryTriggerInteraction.Ignore);
+                int closestIdx = -1;
+                float closestDist = float.MaxValue;
+                for (int i = 0; i < hitCount; i++)
                 {
-                    if (hit.collider.GetComponentInParent<Health>() != null)
+                    if (s_EnemyDetectionBuffer[i].distance < closestDist)
                     {
-                        IsPointingAtEnemy = true;
+                        closestDist = s_EnemyDetectionBuffer[i].distance;
+                        closestIdx = i;
                     }
                 }
+                if (closestIdx >= 0 &&
+                    s_EnemyDetectionBuffer[closestIdx].collider.GetComponentInParent<Health>() != null)
+                    IsPointingAtEnemy = true;
             }
         }
 

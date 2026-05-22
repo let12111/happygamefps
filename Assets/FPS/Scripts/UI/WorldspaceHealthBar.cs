@@ -27,6 +27,8 @@ namespace Unity.FPS.UI
 
         void Update()
         {
+            if (m_Camera == null) return;
+
             float fill = Health.CurrentHealth / Health.MaxHealth;
             HealthBarImage.fillAmount = fill;
 

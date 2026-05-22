@@ -17,6 +17,7 @@ namespace Unity.FPS.UI
         public FillBarColorChange FillBarColorChange;
 
         Jetpack m_Jetpack;
+        bool m_JetpackUnlockedShown;
 
         void Awake()
         {
@@ -24,13 +25,20 @@ namespace Unity.FPS.UI
             DebugUtility.HandleErrorIfNullFindObject<Jetpack, JetpackCounter>(m_Jetpack, this);
 
             FillBarColorChange.Initialize(1f, 0f);
+            MainCanvasGroup.gameObject.SetActive(false);
+            m_JetpackUnlockedShown = false;
         }
 
         void Update()
         {
-            MainCanvasGroup.gameObject.SetActive(m_Jetpack.IsJetpackUnlocked);
+            bool isUnlocked = m_Jetpack.IsJetpackUnlocked;
+            if (isUnlocked != m_JetpackUnlockedShown)
+            {
+                m_JetpackUnlockedShown = isUnlocked;
+                MainCanvasGroup.gameObject.SetActive(isUnlocked);
+            }
 
-            if (m_Jetpack.IsJetpackUnlocked)
+            if (isUnlocked)
             {
                 JetpackFillImage.fillAmount = m_Jetpack.CurrentFillRatio;
                 FillBarColorChange.UpdateVisual(m_Jetpack.CurrentFillRatio);
