@@ -34,6 +34,16 @@ namespace Unity.FPS.UI
             m_PlayerWeaponsManager.OnSwitchedToWeapon += ChangeWeapon;
         }
 
+        void OnDestroy()
+        {
+            if (m_PlayerWeaponsManager != null)
+            {
+                m_PlayerWeaponsManager.OnAddedWeapon -= AddWeapon;
+                m_PlayerWeaponsManager.OnRemovedWeapon -= RemoveWeapon;
+                m_PlayerWeaponsManager.OnSwitchedToWeapon -= ChangeWeapon;
+            }
+        }
+
         void AddWeapon(WeaponController newWeapon, int weaponIndex)
         {
             GameObject ammoCounterInstance = Instantiate(AmmoCounterPrefab, AmmoPanel);

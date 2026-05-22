@@ -63,6 +63,15 @@ namespace Unity.FPS.UI
             m_PlayerHealth.OnHealed += OnHealed;
         }
 
+        void OnDestroy()
+        {
+            if (m_PlayerHealth != null)
+            {
+                m_PlayerHealth.OnDamaged -= OnTakeDamage;
+                m_PlayerHealth.OnHealed -= OnHealed;
+            }
+        }
+
         void Update()
         {
             if (m_PlayerHealth.IsCritical())

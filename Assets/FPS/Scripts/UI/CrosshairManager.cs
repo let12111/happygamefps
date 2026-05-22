@@ -32,6 +32,12 @@ namespace Unity.FPS.UI
             m_WeaponsManager.OnSwitchedToWeapon += OnWeaponChanged;
         }
 
+        void OnDestroy()
+        {
+            if (m_WeaponsManager != null)
+                m_WeaponsManager.OnSwitchedToWeapon -= OnWeaponChanged;
+        }
+
         void Update()
         {
             UpdateCrosshairPointingAtEnemy(false);

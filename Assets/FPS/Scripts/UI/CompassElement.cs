@@ -26,7 +26,8 @@ namespace Unity.FPS.UI
 
         void OnDestroy()
         {
-            m_Compass.UnregisterCompassElement(transform);
+            if (m_Compass != null)
+                m_Compass.UnregisterCompassElement(transform);
         }
     }
 }

@@ -393,6 +393,22 @@ namespace Unity.FPS.AI
             Destroy(gameObject, DeathDuration);
         }
 
+        void OnDestroy()
+        {
+            if (m_Health != null)
+            {
+                m_Health.OnDie -= OnDie;
+                m_Health.OnDamaged -= OnDamaged;
+            }
+
+            if (DetectionModule != null)
+            {
+                DetectionModule.onDetectedTarget -= OnDetectedTarget;
+                DetectionModule.onLostTarget -= OnLostTarget;
+                onAttack -= DetectionModule.OnAttack;
+            }
+        }
+
         void OnDrawGizmosSelected()
         {
             // Path reaching range

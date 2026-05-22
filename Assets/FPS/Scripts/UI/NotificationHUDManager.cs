@@ -12,16 +12,19 @@ namespace Unity.FPS.UI
         [Tooltip("Prefab for the notifications")]
         public GameObject NotificationPrefab;
 
+        PlayerWeaponsManager m_PlayerWeaponsManager;
+        Jetpack m_Jetpack;
+
         void Awake()
         {
-            PlayerWeaponsManager playerWeaponsManager = FindAnyObjectByType<PlayerWeaponsManager>();
-            DebugUtility.HandleErrorIfNullFindObject<PlayerWeaponsManager, NotificationHUDManager>(playerWeaponsManager,
+            m_PlayerWeaponsManager = FindAnyObjectByType<PlayerWeaponsManager>();
+            DebugUtility.HandleErrorIfNullFindObject<PlayerWeaponsManager, NotificationHUDManager>(m_PlayerWeaponsManager,
                 this);
-            playerWeaponsManager.OnAddedWeapon += OnPickupWeapon;
+            m_PlayerWeaponsManager.OnAddedWeapon += OnPickupWeapon;
 
-            Jetpack jetpack = FindAnyObjectByType<Jetpack>();
-            DebugUtility.HandleErrorIfNullFindObject<Jetpack, NotificationHUDManager>(jetpack, this);
-            jetpack.OnUnlockJetpack += OnUnlockJetpack;
+            m_Jetpack = FindAnyObjectByType<Jetpack>();
+            DebugUtility.HandleErrorIfNullFindObject<Jetpack, NotificationHUDManager>(m_Jetpack, this);
+            m_Jetpack.OnUnlockJetpack += OnUnlockJetpack;
 
             EventManager.AddListener<ObjectiveUpdateEvent>(OnObjectiveUpdateEvent);
         }
@@ -57,6 +60,12 @@ namespace Unity.FPS.UI
 
         void OnDestroy()
         {
+            if (m_PlayerWeaponsManager != null)
+                m_PlayerWeaponsManager.OnAddedWeapon -= OnPickupWeapon;
+
+            if (m_Jetpack != null)
+                m_Jetpack.OnUnlockJetpack -= OnUnlockJetpack;
+
             EventManager.RemoveListener<ObjectiveUpdateEvent>(OnObjectiveUpdateEvent);
         }
     }
