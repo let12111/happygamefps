@@ -17,19 +17,27 @@ namespace Unity.FPS.Gameplay
         MeshRenderer[] m_AffectedRenderers;
         ProjectileBase m_ProjectileBase;
 
-        void OnEnable()
+        void Awake()
         {
             m_ProjectileBase = GetComponent<ProjectileBase>();
             DebugUtility.HandleErrorIfNullGetComponent<ProjectileBase, ChargedProjectileEffectsHandler>(
                 m_ProjectileBase, this, gameObject);
-
-            m_ProjectileBase.OnShoot += OnShoot;
 
             m_AffectedRenderers = ChargingObject.GetComponentsInChildren<MeshRenderer>();
             foreach (var ren in m_AffectedRenderers)
             {
                 ren.sharedMaterial = Instantiate(ren.sharedMaterial);
             }
+        }
+
+        void OnEnable()
+        {
+            m_ProjectileBase.OnShoot += OnShoot;
+        }
+
+        void OnDisable()
+        {
+            m_ProjectileBase.OnShoot -= OnShoot;
         }
 
         void OnShoot()
