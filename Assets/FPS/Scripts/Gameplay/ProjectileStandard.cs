@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Unity.FPS.Game;
 using UnityEngine;
 
@@ -27,7 +27,7 @@ namespace Unity.FPS.Gameplay
         [Tooltip("Offset along the hit normal where the VFX will be spawned")]
         public float ImpactVfxSpawnOffset = 0.1f;
 
-        [Tooltip("Clip to play on impact")] 
+        [Tooltip("Clip to play on impact")]
         public AudioClip ImpactSfxClip;
 
         [Tooltip("Layers this projectile can collide with")]
@@ -63,26 +63,39 @@ namespace Unity.FPS.Gameplay
         Vector3 m_TrajectoryCorrectionVector;
         Vector3 m_ConsumedTrajectoryCorrectionVector;
         List<Collider> m_IgnoredColliders;
+        bool m_Returned;
+
+        // Shared buffer — projectiles update sequentially on main thread
+        static readonly RaycastHit[] s_HitBuffer = new RaycastHit[16];
 
         const QueryTriggerInteraction k_TriggerInteraction = QueryTriggerInteraction.Collide;
 
-        void OnEnable()
+        void Awake()
         {
             m_ProjectileBase = GetComponent<ProjectileBase>();
+            m_IgnoredColliders = new List<Collider>();
+        }
+
+        void OnEnable()
+        {
             DebugUtility.HandleErrorIfNullGetComponent<ProjectileBase, ProjectileStandard>(m_ProjectileBase, this,
                 gameObject);
 
             m_ProjectileBase.OnShoot += OnShoot;
+            m_Returned = false;
+            m_ShootTime = Time.time;
+        }
 
-            Destroy(gameObject, MaxLifeTime);
+        void OnDisable()
+        {
+            m_ProjectileBase.OnShoot -= OnShoot;
         }
 
         new void OnShoot()
         {
-            m_ShootTime = Time.time;
             m_LastRootPosition = Root.position;
             m_Velocity = transform.forward * Speed;
-            m_IgnoredColliders = new List<Collider>();
+            m_IgnoredColliders.Clear();
             transform.position += m_ProjectileBase.InheritedMuzzleVelocity * Time.deltaTime;
 
             // Ignore colliders of owner
@@ -123,15 +136,18 @@ namespace Unity.FPS.Gameplay
 
         void Update()
         {
+            if (Time.time - m_ShootTime >= MaxLifeTime)
+            {
+                ReturnToPool();
+                return;
+            }
+
             // Move
             transform.position += m_Velocity * Time.deltaTime;
             if (InheritWeaponVelocity)
-            {
                 transform.position += m_ProjectileBase.InheritedMuzzleVelocity * Time.deltaTime;
-            }
 
-            // Drift towards trajectory override (this is so that projectiles can be centered 
-            // with the camera center even though the actual weapon is offset)
+            // Drift towards trajectory override
             if (m_HasTrajectoryOverride && m_ConsumedTrajectoryCorrectionVector.sqrMagnitude <
                 m_TrajectoryCorrectionVector.sqrMagnitude)
             {
@@ -142,11 +158,8 @@ namespace Unity.FPS.Gameplay
                 correctionThisFrame = Vector3.ClampMagnitude(correctionThisFrame, correctionLeft.magnitude);
                 m_ConsumedTrajectoryCorrectionVector += correctionThisFrame;
 
-                // Detect end of correction
                 if (m_ConsumedTrajectoryCorrectionVector.sqrMagnitude == m_TrajectoryCorrectionVector.sqrMagnitude)
-                {
                     m_HasTrajectoryOverride = false;
-                }
 
                 transform.position += correctionThisFrame;
             }
@@ -156,10 +169,7 @@ namespace Unity.FPS.Gameplay
 
             // Gravity
             if (GravityDownAcceleration > 0)
-            {
-                // add gravity to the projectile velocity for ballistic effect
                 m_Velocity += Vector3.down * GravityDownAcceleration * Time.deltaTime;
-            }
 
             // Hit detection
             {
@@ -167,13 +177,14 @@ namespace Unity.FPS.Gameplay
                 closestHit.distance = Mathf.Infinity;
                 bool foundHit = false;
 
-                // Sphere cast
                 Vector3 displacementSinceLastFrame = Tip.position - m_LastRootPosition;
-                RaycastHit[] hits = Physics.SphereCastAll(m_LastRootPosition, Radius,
-                    displacementSinceLastFrame.normalized, displacementSinceLastFrame.magnitude, HittableLayers,
-                    k_TriggerInteraction);
-                foreach (var hit in hits)
+                int hitCount = Physics.SphereCastNonAlloc(m_LastRootPosition, Radius,
+                    displacementSinceLastFrame.normalized, s_HitBuffer, displacementSinceLastFrame.magnitude,
+                    HittableLayers, k_TriggerInteraction);
+
+                for (int i = 0; i < hitCount; i++)
                 {
+                    var hit = s_HitBuffer[i];
                     if (IsHitValid(hit) && hit.distance < closestHit.distance)
                     {
                         foundHit = true;
@@ -183,7 +194,6 @@ namespace Unity.FPS.Gameplay
 
                 if (foundHit)
                 {
-                    // Handle case of casting while already inside a collider
                     if (closestHit.distance <= 0f)
                     {
                         closestHit.point = Root.position;
@@ -199,23 +209,14 @@ namespace Unity.FPS.Gameplay
 
         bool IsHitValid(RaycastHit hit)
         {
-            // ignore hits with an ignore component
             if (hit.collider.GetComponent<IgnoreHitDetection>())
-            {
                 return false;
-            }
 
-            // ignore hits with triggers that don't have a Damageable component
             if (hit.collider.isTrigger && hit.collider.GetComponent<Damageable>() == null)
-            {
                 return false;
-            }
 
-            // ignore hits with specific ignored colliders (self colliders, by default)
             if (m_IgnoredColliders != null && m_IgnoredColliders.Contains(hit.collider))
-            {
                 return false;
-            }
 
             return true;
         }
@@ -225,39 +226,51 @@ namespace Unity.FPS.Gameplay
             // damage
             if (AreaOfDamage)
             {
-                // area damage
                 AreaOfDamage.InflictDamageInArea(Damage, point, HittableLayers, k_TriggerInteraction,
                     m_ProjectileBase.Owner);
             }
             else
             {
-                // point damage
                 Damageable damageable = collider.GetComponent<Damageable>();
                 if (damageable)
-                {
                     damageable.InflictDamage(Damage, false, m_ProjectileBase.Owner);
-                }
             }
 
             // impact vfx
             if (ImpactVfx)
             {
-                GameObject impactVfxInstance = Instantiate(ImpactVfx, point + (normal * ImpactVfxSpawnOffset),
-                    Quaternion.LookRotation(normal));
-                if (ImpactVfxLifetime > 0)
+                Vector3 spawnPos = point + (normal * ImpactVfxSpawnOffset);
+                Quaternion spawnRot = Quaternion.LookRotation(normal);
+
+                if (GameObjectPoolManager.Instance != null)
                 {
-                    Destroy(impactVfxInstance.gameObject, ImpactVfxLifetime);
+                    GameObjectPoolManager.Instance.Get(ImpactVfx, spawnPos, spawnRot);
+                    // PooledParticleAutoRelease handles return automatically when particles finish
+                }
+                else
+                {
+                    GameObject vfx = Instantiate(ImpactVfx, spawnPos, spawnRot);
+                    if (ImpactVfxLifetime > 0)
+                        Destroy(vfx, ImpactVfxLifetime);
                 }
             }
 
             // impact sfx
             if (ImpactSfxClip)
-            {
                 AudioUtility.CreateSFX(ImpactSfxClip, point, AudioUtility.AudioGroups.Impact, 1f, 3f);
-            }
 
-            // Self Destruct
-            Destroy(this.gameObject);
+            ReturnToPool();
+        }
+
+        void ReturnToPool()
+        {
+            if (m_Returned) return;
+            m_Returned = true;
+
+            if (GameObjectPoolManager.Instance != null)
+                GameObjectPoolManager.Instance.Release(gameObject);
+            else
+                Destroy(gameObject);
         }
 
         void OnDrawGizmosSelected()

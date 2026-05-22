@@ -197,18 +197,40 @@ namespace Unity.FPS.Game
             for (int i = 0; i < bulletsPerShotFinal; i++)
             {
                 Vector3 shotDirection = GetShotDirectionWithinSpread(WeaponMuzzle);
-                ProjectileBase newProjectile = Instantiate(ProjectilePrefab, WeaponMuzzle.position,
-                    Quaternion.LookRotation(shotDirection));
+                ProjectileBase newProjectile;
+                if (GameObjectPoolManager.Instance != null)
+                {
+                    var go = GameObjectPoolManager.Instance.Get(ProjectilePrefab.gameObject,
+                        WeaponMuzzle.position, Quaternion.LookRotation(shotDirection));
+                    newProjectile = go.GetComponent<ProjectileBase>();
+                }
+                else
+                {
+                    newProjectile = Instantiate(ProjectilePrefab, WeaponMuzzle.position,
+                        Quaternion.LookRotation(shotDirection));
+                }
                 newProjectile.Shoot(this);
             }
 
             if (MuzzleFlashPrefab != null)
             {
-                GameObject muzzleFlashInstance = Instantiate(MuzzleFlashPrefab, WeaponMuzzle.position,
-                    WeaponMuzzle.rotation, WeaponMuzzle.transform);
-                if (UnparentMuzzleFlash)
-                    muzzleFlashInstance.transform.SetParent(null);
-                Destroy(muzzleFlashInstance, 2f);
+                if (GameObjectPoolManager.Instance != null)
+                {
+                    var muzzleFlashInstance = GameObjectPoolManager.Instance.Get(MuzzleFlashPrefab,
+                        WeaponMuzzle.position, WeaponMuzzle.rotation);
+                    muzzleFlashInstance.transform.SetParent(UnparentMuzzleFlash ? null : WeaponMuzzle.transform);
+                    // Only use timed release if no particle system — otherwise PooledParticleAutoRelease handles it
+                    if (muzzleFlashInstance.GetComponent<PooledParticleAutoRelease>() == null)
+                        GameObjectPoolManager.Instance.ReleaseDelayed(muzzleFlashInstance, 2f);
+                }
+                else
+                {
+                    GameObject muzzleFlashInstance = Instantiate(MuzzleFlashPrefab, WeaponMuzzle.position,
+                        WeaponMuzzle.rotation, WeaponMuzzle.transform);
+                    if (UnparentMuzzleFlash)
+                        muzzleFlashInstance.transform.SetParent(null);
+                    Destroy(muzzleFlashInstance, 2f);
+                }
             }
 
             m_AmmoModule.EjectShell();
