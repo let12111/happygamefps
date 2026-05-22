@@ -31,7 +31,7 @@ namespace Unity.FPS.AI
 
         protected float TimeLastSeenTarget = Mathf.NegativeInfinity;
 
-        ActorsManager m_ActorsManager;
+        IActorsManager m_ActorsManager;
 
         static readonly RaycastHit[] s_RaycastBuffer = new RaycastHit[16];
 
@@ -40,8 +40,9 @@ namespace Unity.FPS.AI
 
         protected virtual void Start()
         {
-            m_ActorsManager = FindAnyObjectByType<ActorsManager>();
-            DebugUtility.HandleErrorIfNullFindObject<ActorsManager, DetectionModule>(m_ActorsManager, this);
+            var actorsManager = FindAnyObjectByType<ActorsManager>();
+            DebugUtility.HandleErrorIfNullFindObject<ActorsManager, DetectionModule>(actorsManager, this);
+            m_ActorsManager = actorsManager;
         }
 
         public virtual void HandleTargetDetection(Actor actor, Collider[] selfColliders)

@@ -61,6 +61,7 @@
     <Compile Include="Assets\FPS\Scripts\UI\JetpackCounter.cs" />
     <Compile Include="Assets\FPS\Scripts\UI\NotificationHUDManager.cs" />
     <Compile Include="Assets\FPS\Scripts\UI\MenuNavigation.cs" />
+    <Compile Include="Assets\FPS\Scripts\UI\GameLifetimeScope.cs" />
     <Compile Include="Assets\FPS\Scripts\UI\FramerateCounter.cs" />
     <Compile Include="Assets\FPS\Scripts\UI\InGameMenuManager.cs" />
     <Compile Include="Assets\FPS\Scripts\UI\StanceHUD.cs" />
@@ -1153,6 +1154,10 @@
     </Reference>
     <Reference Include="Unity.InputSystem">
       <HintPath>Library\ScriptAssemblies\Unity.InputSystem.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="VContainer">
+      <HintPath>Library\ScriptAssemblies\VContainer.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEditor.UI">

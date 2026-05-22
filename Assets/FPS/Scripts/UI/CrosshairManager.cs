@@ -1,7 +1,8 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using Unity.FPS.Gameplay;
 using UnityEngine;
 using UnityEngine.UI;
+using VContainer;
 
 namespace Unity.FPS.UI
 {
@@ -18,11 +19,14 @@ namespace Unity.FPS.UI
         CrosshairData m_CrosshairDataTarget;
         CrosshairData m_CurrentCrosshair;
 
+        [Inject]
+        public void Construct(PlayerWeaponsManager weaponsManager)
+        {
+            m_WeaponsManager = weaponsManager;
+        }
+
         void Start()
         {
-            m_WeaponsManager = FindAnyObjectByType<PlayerWeaponsManager>();
-            DebugUtility.HandleErrorIfNullFindObject<PlayerWeaponsManager, CrosshairManager>(m_WeaponsManager, this);
-
             m_CrosshairRectTransform = CrosshairImage.GetComponent<RectTransform>();
             DebugUtility.HandleErrorIfNullGetComponent<RectTransform, CrosshairManager>(m_CrosshairRectTransform,
                 this, CrosshairImage.gameObject);

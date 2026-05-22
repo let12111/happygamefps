@@ -55,6 +55,7 @@
     <Compile Include="Assets\FPS\Scripts\AI\EnemyTurret.cs" />
     <Compile Include="Assets\FPS\Scripts\AI\EnemyMobile.cs" />
     <Compile Include="Assets\FPS\Scripts\AI\EnemyManager.cs" />
+    <Compile Include="Assets\FPS\Scripts\AI\IEnemyManager.cs" />
     <Compile Include="Assets\FPS\Scripts\AI\PatrolPath.cs" />
     <Compile Include="Assets\FPS\Scripts\AI\DetectionModule.cs" />
   </ItemGroup>
@@ -1128,6 +1129,10 @@
     </Reference>
     <Reference Include="System.Xml.Serialization">
       <HintPath>C:\Program Files\Unity\Hub\Editor\6000.4.5f1\Editor\Data\NetStandard\compat\2.1.0\shims\netfx\System.Xml.Serialization.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="VContainer">
+      <HintPath>Library\ScriptAssemblies\VContainer.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEditor.UI">

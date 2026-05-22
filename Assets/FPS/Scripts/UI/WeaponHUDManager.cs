@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Unity.FPS.Game;
 using Unity.FPS.Gameplay;
 using UnityEngine;
+using VContainer;
 
 namespace Unity.FPS.UI
 {
@@ -16,12 +17,14 @@ namespace Unity.FPS.UI
         PlayerWeaponsManager m_PlayerWeaponsManager;
         List<AmmoCounter> m_AmmoCounters = new List<AmmoCounter>();
 
+        [Inject]
+        public void Construct(PlayerWeaponsManager playerWeaponsManager)
+        {
+            m_PlayerWeaponsManager = playerWeaponsManager;
+        }
+
         void Start()
         {
-            m_PlayerWeaponsManager = FindAnyObjectByType<PlayerWeaponsManager>();
-            DebugUtility.HandleErrorIfNullFindObject<PlayerWeaponsManager, WeaponHUDManager>(m_PlayerWeaponsManager,
-                this);
-
             WeaponController activeWeapon = m_PlayerWeaponsManager.GetActiveWeapon();
             if (activeWeapon)
             {
@@ -51,7 +54,7 @@ namespace Unity.FPS.UI
             DebugUtility.HandleErrorIfNullGetComponent<AmmoCounter, WeaponHUDManager>(newAmmoCounter, this,
                 ammoCounterInstance.gameObject);
 
-            newAmmoCounter.Initialize(newWeapon, weaponIndex);
+            newAmmoCounter.Initialize(newWeapon, weaponIndex, m_PlayerWeaponsManager);
 
             m_AmmoCounters.Add(newAmmoCounter);
         }

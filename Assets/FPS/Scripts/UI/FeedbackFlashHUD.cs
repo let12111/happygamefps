@@ -1,7 +1,8 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using Unity.FPS.Gameplay;
 using UnityEngine;
 using UnityEngine.UI;
+using VContainer;
 
 namespace Unity.FPS.UI
 {
@@ -43,22 +44,19 @@ namespace Unity.FPS.UI
         bool m_FlashActive;
         float m_LastTimeFlashStarted = Mathf.NegativeInfinity;
         Health m_PlayerHealth;
-        GameFlowManager m_GameFlowManager;
+        IGameFlowManager m_GameFlowManager;
 
-        void Start()
+        [Inject]
+        public void Construct(PlayerCharacterController playerCharacterController, IGameFlowManager gameFlowManager)
         {
-            // Subscribe to player damage events
-            PlayerCharacterController playerCharacterController = FindAnyObjectByType<PlayerCharacterController>();
-            DebugUtility.HandleErrorIfNullFindObject<PlayerCharacterController, FeedbackFlashHUD>(
-                playerCharacterController, this);
-
             m_PlayerHealth = playerCharacterController.GetComponent<Health>();
             DebugUtility.HandleErrorIfNullGetComponent<Health, FeedbackFlashHUD>(m_PlayerHealth, this,
                 playerCharacterController.gameObject);
+            m_GameFlowManager = gameFlowManager;
+        }
 
-            m_GameFlowManager = FindAnyObjectByType<GameFlowManager>();
-            DebugUtility.HandleErrorIfNullFindObject<GameFlowManager, FeedbackFlashHUD>(m_GameFlowManager, this);
-
+        void Start()
+        {
             m_PlayerHealth.OnDamaged += OnTakeDamage;
             m_PlayerHealth.OnHealed += OnHealed;
         }
@@ -91,7 +89,6 @@ namespace Unity.FPS.UI
             {
                 VignetteCanvasGroup.gameObject.SetActive(false);
             }
-
 
             if (m_FlashActive)
             {

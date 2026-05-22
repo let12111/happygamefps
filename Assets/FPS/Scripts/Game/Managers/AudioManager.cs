@@ -7,6 +7,8 @@ namespace Unity.FPS.Game
     {
         public AudioMixer[] AudioMixers;
 
+        void Awake() => AudioUtility.Initialize(this);
+
         public AudioMixerGroup[] FindMatchingGroups(string subPath)
         {
             for (int i = 0; i < AudioMixers.Length; i++)

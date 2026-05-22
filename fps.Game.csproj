@@ -67,6 +67,7 @@
     <Compile Include="Assets\FPS\Scripts\Game\Actor.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\Shared\Destructable.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\Managers\GameFlowManager.cs" />
+    <Compile Include="Assets\FPS\Scripts\Game\Managers\IGameFlowManager.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\Shared\WeaponController.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\GameConstants.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\Managers\EventManager.cs" />
@@ -74,6 +75,7 @@
     <Compile Include="Assets\FPS\Scripts\Game\Shared\WeaponAmmoModule.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\PooledParticleAutoRelease.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\Shared\Objective.cs" />
+    <Compile Include="Assets\FPS\Scripts\Game\Managers\IActorsManager.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\Managers\ObjectiveManager.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\Events.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\Shared\ProjectileBase.cs" />
@@ -1153,6 +1155,10 @@
     </Reference>
     <Reference Include="Unity.ProBuilder">
       <HintPath>Library\ScriptAssemblies\Unity.ProBuilder.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="VContainer">
+      <HintPath>Library\ScriptAssemblies\VContainer.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEditor.UI">

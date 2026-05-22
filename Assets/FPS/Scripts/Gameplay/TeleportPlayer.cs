@@ -1,19 +1,18 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using VContainer;
 
 namespace Unity.FPS.Gameplay
 {
-    // Debug script, teleports the player across the map for faster testing
     public class TeleportPlayer : MonoBehaviour
     {
         PlayerCharacterController m_PlayerCharacterController;
 
-        void Awake()
+        [Inject]
+        public void Construct(PlayerCharacterController playerCharacterController)
         {
-            m_PlayerCharacterController = FindAnyObjectByType<PlayerCharacterController>();
-            DebugUtility.HandleErrorIfNullFindObject<PlayerCharacterController, TeleportPlayer>(
-                m_PlayerCharacterController, this);
+            m_PlayerCharacterController = playerCharacterController;
         }
 
         void Update()
@@ -28,6 +27,5 @@ namespace Unity.FPS.Gameplay
                 }
             }
         }
-
     }
 }

@@ -1,7 +1,8 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using Unity.FPS.Gameplay;
 using UnityEngine;
 using UnityEngine.UI;
+using VContainer;
 
 namespace Unity.FPS.UI
 {
@@ -12,17 +13,16 @@ namespace Unity.FPS.UI
 
         Health m_PlayerHealth;
 
-        void Start()
+        [Inject]
+        public void Construct(PlayerCharacterController playerCharacterController)
         {
-            PlayerCharacterController playerCharacterController =
-                FindAnyObjectByType<PlayerCharacterController>();
-            DebugUtility.HandleErrorIfNullFindObject<PlayerCharacterController, PlayerHealthBar>(
-                playerCharacterController, this);
-
             m_PlayerHealth = playerCharacterController.GetComponent<Health>();
             DebugUtility.HandleErrorIfNullGetComponent<Health, PlayerHealthBar>(m_PlayerHealth, this,
                 playerCharacterController.gameObject);
+        }
 
+        void Start()
+        {
             m_PlayerHealth.OnDamaged += OnHealthChanged;
             m_PlayerHealth.OnHealed += OnHealthHealed;
             UpdateHealthBar();

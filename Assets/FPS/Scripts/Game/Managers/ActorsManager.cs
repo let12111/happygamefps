@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Unity.FPS.Game
 {
-    public class ActorsManager : MonoBehaviour
+    public class ActorsManager : MonoBehaviour, IActorsManager
     {
         public List<Actor> Actors { get; private set; }
         public GameObject Player { get; private set; }

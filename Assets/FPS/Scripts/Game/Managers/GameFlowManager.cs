@@ -3,7 +3,7 @@ using UnityEngine.SceneManagement;
 
 namespace Unity.FPS.Game
 {
-    public class GameFlowManager : MonoBehaviour
+    public class GameFlowManager : MonoBehaviour, IGameFlowManager
     {
         [Header("Parameters")] [Tooltip("Duration of the fade-to-black at the end of the game")]
         public float EndSceneLoadDelay = 3f;

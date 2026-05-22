@@ -1,4 +1,4 @@
-﻿using TMPro;
+using TMPro;
 using Unity.FPS.Game;
 using Unity.FPS.Gameplay;
 using UnityEngine;
@@ -20,10 +20,10 @@ namespace Unity.FPS.UI
         [Tooltip("Image component to display fill ratio")]
         public Image AmmoFillImage;
 
-        [Tooltip("Text for Weapon index")] 
+        [Tooltip("Text for Weapon index")]
         public TextMeshProUGUI WeaponIndexText;
 
-        [Tooltip("Text for Bullet Counter")] 
+        [Tooltip("Text for Bullet Counter")]
         public TextMeshProUGUI BulletCounter;
 
         [Tooltip("Reload Text for Weapons with physical bullets")]
@@ -63,9 +63,10 @@ namespace Unity.FPS.UI
             }
         }
 
-        public void Initialize(WeaponController weapon, int weaponIndex)
+        public void Initialize(WeaponController weapon, int weaponIndex, PlayerWeaponsManager playerWeaponsManager)
         {
             m_Weapon = weapon;
+            m_PlayerWeaponsManager = playerWeaponsManager;
             WeaponCounterIndex = weaponIndex;
             WeaponImage.sprite = weapon.WeaponIcon;
             if (!weapon.HasPhysicalBullets)
@@ -77,8 +78,6 @@ namespace Unity.FPS.UI
             }
 
             Reload.gameObject.SetActive(false);
-            m_PlayerWeaponsManager = FindAnyObjectByType<PlayerWeaponsManager>();
-            DebugUtility.HandleErrorIfNullFindObject<PlayerWeaponsManager, AmmoCounter>(m_PlayerWeaponsManager, this);
 
             WeaponIndexText.text = (WeaponCounterIndex + 1).ToString();
 

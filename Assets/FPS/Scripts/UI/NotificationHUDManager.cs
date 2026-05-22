@@ -1,6 +1,7 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using Unity.FPS.Gameplay;
 using UnityEngine;
+using VContainer;
 
 namespace Unity.FPS.UI
 {
@@ -15,15 +16,16 @@ namespace Unity.FPS.UI
         PlayerWeaponsManager m_PlayerWeaponsManager;
         Jetpack m_Jetpack;
 
-        void Awake()
+        [Inject]
+        public void Construct(PlayerWeaponsManager playerWeaponsManager, Jetpack jetpack)
         {
-            m_PlayerWeaponsManager = FindAnyObjectByType<PlayerWeaponsManager>();
-            DebugUtility.HandleErrorIfNullFindObject<PlayerWeaponsManager, NotificationHUDManager>(m_PlayerWeaponsManager,
-                this);
-            m_PlayerWeaponsManager.OnAddedWeapon += OnPickupWeapon;
+            m_PlayerWeaponsManager = playerWeaponsManager;
+            m_Jetpack = jetpack;
+        }
 
-            m_Jetpack = FindAnyObjectByType<Jetpack>();
-            DebugUtility.HandleErrorIfNullFindObject<Jetpack, NotificationHUDManager>(m_Jetpack, this);
+        void Start()
+        {
+            m_PlayerWeaponsManager.OnAddedWeapon += OnPickupWeapon;
             m_Jetpack.OnUnlockJetpack += OnUnlockJetpack;
 
             EventManager.AddListener<ObjectiveUpdateEvent>(OnObjectiveUpdateEvent);

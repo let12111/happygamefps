@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Unity.FPS.Game;
 using Unity.FPS.Gameplay;
 using UnityEngine;
+using VContainer;
 
 namespace Unity.FPS.UI
 {
@@ -22,13 +23,14 @@ namespace Unity.FPS.UI
         float m_WidthMultiplier;
         float m_HeightOffset;
 
-        void Awake()
+        [Inject]
+        public void Construct(PlayerCharacterController playerCharacterController)
         {
-            PlayerCharacterController playerCharacterController = FindAnyObjectByType<PlayerCharacterController>();
-            DebugUtility.HandleErrorIfNullFindObject<PlayerCharacterController, Compass>(playerCharacterController,
-                this);
             m_PlayerTransform = playerCharacterController.transform;
+        }
 
+        void Start()
+        {
             m_WidthMultiplier = CompasRect.rect.width / VisibilityAngle;
             m_HeightOffset = -CompasRect.rect.height / 2;
         }
@@ -81,7 +83,6 @@ namespace Unity.FPS.UI
         public void RegisterCompassElement(Transform element, CompassMarker marker)
         {
             marker.transform.SetParent(CompasRect);
-
             m_ElementsDictionnary.Add(element, marker);
         }
 

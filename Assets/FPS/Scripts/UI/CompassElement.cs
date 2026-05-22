@@ -1,5 +1,6 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using UnityEngine;
+using VContainer;
 
 namespace Unity.FPS.UI
 {
@@ -13,13 +14,15 @@ namespace Unity.FPS.UI
 
         Compass m_Compass;
 
-        void Awake()
+        [Inject]
+        public void Construct(Compass compass)
         {
-            m_Compass = FindAnyObjectByType<Compass>();
-            DebugUtility.HandleErrorIfNullFindObject<Compass, CompassElement>(m_Compass, this);
+            m_Compass = compass;
+        }
 
+        void Start()
+        {
             var markerInstance = Instantiate(CompassMarkerPrefab);
-
             markerInstance.Initialize(this, TextDirection);
             m_Compass.RegisterCompassElement(transform, markerInstance);
         }

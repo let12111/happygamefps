@@ -1,7 +1,8 @@
-﻿using Unity.FPS.AI;
+using Unity.FPS.AI;
 using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.UI;
+using VContainer;
 
 namespace Unity.FPS.UI
 {
@@ -10,14 +11,14 @@ namespace Unity.FPS.UI
         [Header("Enemies")] [Tooltip("Text component for displaying enemy objective progress")]
         public Text EnemiesText;
 
-        EnemyManager m_EnemyManager;
+        IEnemyManager m_EnemyManager;
         int m_LastRemaining = -1;
         int m_LastTotal = -1;
 
-        void Awake()
+        [Inject]
+        public void Construct(IEnemyManager enemyManager)
         {
-            m_EnemyManager = FindAnyObjectByType<EnemyManager>();
-            DebugUtility.HandleErrorIfNullFindObject<EnemyManager, EnemyCounter>(m_EnemyManager, this);
+            m_EnemyManager = enemyManager;
         }
 
         void Update()

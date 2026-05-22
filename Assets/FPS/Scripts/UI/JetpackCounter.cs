@@ -1,7 +1,8 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using Unity.FPS.Gameplay;
 using UnityEngine;
 using UnityEngine.UI;
+using VContainer;
 
 namespace Unity.FPS.UI
 {
@@ -19,11 +20,14 @@ namespace Unity.FPS.UI
         Jetpack m_Jetpack;
         bool m_JetpackUnlockedShown;
 
+        [Inject]
+        public void Construct(Jetpack jetpack)
+        {
+            m_Jetpack = jetpack;
+        }
+
         void Awake()
         {
-            m_Jetpack = FindAnyObjectByType<Jetpack>();
-            DebugUtility.HandleErrorIfNullFindObject<Jetpack, JetpackCounter>(m_Jetpack, this);
-
             FillBarColorChange.Initialize(1f, 0f);
             MainCanvasGroup.gameObject.SetActive(false);
             m_JetpackUnlockedShown = false;

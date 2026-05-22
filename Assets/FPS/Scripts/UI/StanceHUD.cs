@@ -1,7 +1,8 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using Unity.FPS.Gameplay;
 using UnityEngine;
 using UnityEngine.UI;
+using VContainer;
 
 namespace Unity.FPS.UI
 {
@@ -18,12 +19,15 @@ namespace Unity.FPS.UI
 
         PlayerCharacterController m_Character;
 
+        [Inject]
+        public void Construct(PlayerCharacterController character)
+        {
+            m_Character = character;
+        }
+
         void Start()
         {
-            m_Character = FindAnyObjectByType<PlayerCharacterController>();
-            DebugUtility.HandleErrorIfNullFindObject<PlayerCharacterController, StanceHUD>(m_Character, this);
             m_Character.OnStanceChanged += OnStanceChanged;
-
             OnStanceChanged(m_Character.IsCrouching);
         }
 

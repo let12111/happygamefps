@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Unity.FPS.AI
 {
-    public class EnemyManager : MonoBehaviour
+    public class EnemyManager : MonoBehaviour, IEnemyManager
     {
         public List<EnemyController> Enemies { get; private set; }
         public int NumberOfEnemiesTotal { get; private set; }

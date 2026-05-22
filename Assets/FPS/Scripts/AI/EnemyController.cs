@@ -105,12 +105,12 @@ namespace Unity.FPS.AI
         public DetectionModule DetectionModule { get; private set; }
 
         int m_PathDestinationNodeIndex;
-        EnemyManager m_EnemyManager;
-        ActorsManager m_ActorsManager;
+        IEnemyManager m_EnemyManager;
+        IActorsManager m_ActorsManager;
         Health m_Health;
         Actor m_Actor;
         Collider[] m_SelfColliders;
-        GameFlowManager m_GameFlowManager;
+        IGameFlowManager m_GameFlowManager;
         bool m_WasDamagedThisFrame;
         float m_NextDetectionTime;
         bool m_FlashActive;
@@ -122,11 +122,13 @@ namespace Unity.FPS.AI
 
         void Start()
         {
-            m_EnemyManager = FindAnyObjectByType<EnemyManager>();
-            DebugUtility.HandleErrorIfNullFindObject<EnemyManager, EnemyController>(m_EnemyManager, this);
+            var enemyManager = FindAnyObjectByType<EnemyManager>();
+            DebugUtility.HandleErrorIfNullFindObject<EnemyManager, EnemyController>(enemyManager, this);
+            m_EnemyManager = enemyManager;
 
-            m_ActorsManager = FindAnyObjectByType<ActorsManager>();
-            DebugUtility.HandleErrorIfNullFindObject<ActorsManager, EnemyController>(m_ActorsManager, this);
+            var actorsManager = FindAnyObjectByType<ActorsManager>();
+            DebugUtility.HandleErrorIfNullFindObject<ActorsManager, EnemyController>(actorsManager, this);
+            m_ActorsManager = actorsManager;
 
             m_EnemyManager.RegisterEnemy(this);
 
@@ -139,8 +141,9 @@ namespace Unity.FPS.AI
             NavMeshAgent = GetComponent<NavMeshAgent>();
             m_SelfColliders = GetComponentsInChildren<Collider>();
 
-            m_GameFlowManager = FindAnyObjectByType<GameFlowManager>();
-            DebugUtility.HandleErrorIfNullFindObject<GameFlowManager, EnemyController>(m_GameFlowManager, this);
+            var gameFlowManager = FindAnyObjectByType<GameFlowManager>();
+            DebugUtility.HandleErrorIfNullFindObject<GameFlowManager, EnemyController>(gameFlowManager, this);
+            m_GameFlowManager = gameFlowManager;
 
             // Subscribe to damage & death actions
             m_Health.OnDie += OnDie;

@@ -1,6 +1,7 @@
 ﻿using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using VContainer;
 
 namespace Unity.FPS.Gameplay
 {
@@ -21,7 +22,7 @@ namespace Unity.FPS.Gameplay
         [Tooltip("Used to flip the horizontal input axis")]
         public bool InvertXAxis = false;
 
-        GameFlowManager m_GameFlowManager;
+        IGameFlowManager m_GameFlowManager;
         PlayerCharacterController m_PlayerCharacterController;
         bool m_FireInputWasHeld;
 
@@ -35,13 +36,17 @@ namespace Unity.FPS.Gameplay
         private InputAction m_ReloadAction;
         private InputAction m_NextWeaponAction;
 
+        [Inject]
+        public void Construct(IGameFlowManager gameFlowManager)
+        {
+            m_GameFlowManager = gameFlowManager;
+        }
+
         void Start()
         {
             m_PlayerCharacterController = GetComponent<PlayerCharacterController>();
             DebugUtility.HandleErrorIfNullGetComponent<PlayerCharacterController, PlayerInputHandler>(
                 m_PlayerCharacterController, this, gameObject);
-            m_GameFlowManager = FindAnyObjectByType<GameFlowManager>();
-            DebugUtility.HandleErrorIfNullFindObject<GameFlowManager, PlayerInputHandler>(m_GameFlowManager, this);
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;

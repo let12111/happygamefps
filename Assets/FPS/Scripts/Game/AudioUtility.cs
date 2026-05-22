@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -25,6 +25,12 @@ namespace Unity.FPS.Game
             EnemyAttack
         }
 
+        public static void Initialize(AudioManager audioManager)
+        {
+            s_AudioManager = audioManager;
+            s_AudioGroupCache.Clear();
+        }
+
         public static void CreateSFX(AudioClip clip, Vector3 position, AudioGroups audioGroup, float spatialBlend,
             float rolloffDistanceMin = 1f)
         {
@@ -47,9 +53,6 @@ namespace Unity.FPS.Game
             if (s_AudioGroupCache.TryGetValue(group, out AudioMixerGroup cached))
                 return cached;
 
-            if (s_AudioManager == null)
-                s_AudioManager = Object.FindAnyObjectByType<AudioManager>();
-
             var groups = s_AudioManager.FindMatchingGroups(group.ToString());
             AudioMixerGroup result = groups.Length > 0 ? groups[0] : null;
 
@@ -62,21 +65,14 @@ namespace Unity.FPS.Game
 
         public static void SetMasterVolume(float value)
         {
-            if (s_AudioManager == null)
-                s_AudioManager = Object.FindAnyObjectByType<AudioManager>();
-
             if (value <= 0)
                 value = 0.001f;
             float valueInDb = Mathf.Log10(value) * 20;
-
             s_AudioManager.SetFloat("MasterVolume", valueInDb);
         }
 
         public static float GetMasterVolume()
         {
-            if (s_AudioManager == null)
-                s_AudioManager = Object.FindAnyObjectByType<AudioManager>();
-
             s_AudioManager.GetFloat("MasterVolume", out var valueInDb);
             return Mathf.Pow(10f, valueInDb / 20.0f);
         }
