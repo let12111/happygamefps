@@ -58,6 +58,7 @@
     <Compile Include="Assets\FPS\Scripts\Game\TimedSelfDestruct.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\MeshCombiner.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\MeshCombineUtility.cs" />
+    <Compile Include="Assets\FPS\Scripts\Game\AudioSourcePool.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\Managers\GameObjectPoolManager.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\AudioUtility.cs" />
     <Compile Include="Assets\FPS\Scripts\Game\Shared\WeaponAudioModule.cs" />

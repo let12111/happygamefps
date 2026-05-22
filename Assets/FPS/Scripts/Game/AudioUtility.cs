@@ -34,18 +34,13 @@ namespace Unity.FPS.Game
         public static void CreateSFX(AudioClip clip, Vector3 position, AudioGroups audioGroup, float spatialBlend,
             float rolloffDistanceMin = 1f)
         {
-            GameObject impactSfxInstance = new GameObject();
-            impactSfxInstance.transform.position = position;
-            AudioSource source = impactSfxInstance.AddComponent<AudioSource>();
+            var source = AudioSourcePool.Instance.Get(position);
             source.clip = clip;
             source.spatialBlend = spatialBlend;
             source.minDistance = rolloffDistanceMin;
-            source.Play();
-
             source.outputAudioMixerGroup = GetAudioGroup(audioGroup);
-
-            TimedSelfDestruct timedSelfDestruct = impactSfxInstance.AddComponent<TimedSelfDestruct>();
-            timedSelfDestruct.LifeTime = clip.length;
+            source.Play();
+            AudioSourcePool.Instance.ReturnAfterDelay(source, clip.length);
         }
 
         public static AudioMixerGroup GetAudioGroup(AudioGroups group)
