@@ -563,6 +563,11 @@ namespace Unity.FPS.Gameplay
             return distanceBetweenSlots;
         }
 
+        void OnDestroy()
+        {
+            OnSwitchedToWeapon -= OnWeaponSwitched;
+        }
+
         void OnWeaponSwitched(WeaponController newWeapon)
         {
             if (newWeapon != null)

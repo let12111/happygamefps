@@ -79,6 +79,7 @@ namespace Unity.FPS.AI
             switch (AiState)
             {
                 case AIState.Attack:
+                    if (m_EnemyController.KnownDetectedTarget == null) { AiState = AIState.Idle; break; }
                     bool mustShoot = Time.time > m_TimeStartedDetection + DetectionFireDelay;
                     // Calculate the desired rotation of our turret (aim at target)
                     Vector3 directionToTarget =
@@ -95,7 +96,7 @@ namespace Unity.FPS.AI
                             (m_PivotAimingRotation * Quaternion.Inverse(m_RotationWeaponForwardToPivot)) *
                             Vector3.forward;
 
-                        m_EnemyController.TryAtack(TurretAimPoint.position + correctedDirectionToTarget);
+                        m_EnemyController.TryAttack(TurretAimPoint.position + correctedDirectionToTarget);
                     }
 
                     break;

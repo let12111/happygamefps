@@ -62,7 +62,7 @@ namespace Unity.FPS.Gameplay
         float m_ShootTime;
         Vector3 m_TrajectoryCorrectionVector;
         Vector3 m_ConsumedTrajectoryCorrectionVector;
-        List<Collider> m_IgnoredColliders;
+        HashSet<Collider> m_IgnoredColliders;
         bool m_Returned;
 
         Camera m_Camera;
@@ -78,7 +78,7 @@ namespace Unity.FPS.Gameplay
         void Awake()
         {
             m_ProjectileBase = GetComponent<ProjectileBase>();
-            m_IgnoredColliders = new List<Collider>();
+            m_IgnoredColliders = new HashSet<Collider>();
             m_Camera = Camera.main;
         }
 
@@ -112,7 +112,7 @@ namespace Unity.FPS.Gameplay
                 m_CachedOwnerColliders = owner.GetComponentsInChildren<Collider>();
                 m_IsPlayerOwner = owner.GetComponent<PlayerCharacterController>() != null;
             }
-            m_IgnoredColliders.AddRange(m_CachedOwnerColliders);
+            foreach (var c in m_CachedOwnerColliders) m_IgnoredColliders.Add(c);
 
             // Handle case of player shooting (make projectiles not go through walls, and remember center-of-screen trajectory)
             if (m_Camera != null && m_IsPlayerOwner)

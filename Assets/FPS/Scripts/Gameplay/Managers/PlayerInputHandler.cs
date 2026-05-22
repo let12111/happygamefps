@@ -72,6 +72,19 @@ namespace Unity.FPS.Gameplay
             m_NextWeaponAction.Enable();
         }
 
+        void OnDestroy()
+        {
+            m_MoveAction?.Disable();
+            m_LookAction?.Disable();
+            m_JumpAction?.Disable();
+            m_FireAction?.Disable();
+            m_AimAction?.Disable();
+            m_SprintAction?.Disable();
+            m_CrouchAction?.Disable();
+            m_ReloadAction?.Disable();
+            m_NextWeaponAction?.Disable();
+        }
+
         void LateUpdate()
         {
             m_FireInputWasHeld = GetFireInputHeld();

@@ -113,7 +113,7 @@ namespace Unity.FPS.UI
             Reload.gameObject.SetActive(m_Weapon.GetCarriedPhysicalBullets() > 0 && m_Weapon.GetCurrentAmmo() == 0 && m_Weapon.IsWeaponActive);
         }
 
-        void Destroy()
+        void OnDestroy()
         {
             EventManager.RemoveListener<AmmoPickupEvent>(OnAmmoPickup);
         }

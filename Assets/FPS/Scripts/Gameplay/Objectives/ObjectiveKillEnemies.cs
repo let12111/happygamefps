@@ -41,7 +41,9 @@ namespace Unity.FPS.Gameplay
             if (MustKillAllEnemies)
                 KillsToCompleteObjective = evt.RemainingEnemyCount + m_KillTotal;
 
-            int targetRemaining = MustKillAllEnemies ? evt.RemainingEnemyCount : KillsToCompleteObjective - m_KillTotal;
+            int targetRemaining = MustKillAllEnemies
+                ? evt.RemainingEnemyCount
+                : KillsToCompleteObjective - m_KillTotal;
 
             // update the objective text according to how many enemies remain to kill
             if (targetRemaining == 0)

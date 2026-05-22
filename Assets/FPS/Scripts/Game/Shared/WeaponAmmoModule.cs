@@ -76,7 +76,7 @@ namespace Unity.FPS.Game
                 IsCooling = false;
             }
 
-            CurrentAmmoRatio = MaxAmmo == Mathf.Infinity ? 1f : m_CurrentAmmo / MaxAmmo;
+            CurrentAmmoRatio = MaxAmmo > 0 ? m_CurrentAmmo / MaxAmmo : 1f;
         }
 
         // Decrements both current ammo and carried bullets (used by charge mode).

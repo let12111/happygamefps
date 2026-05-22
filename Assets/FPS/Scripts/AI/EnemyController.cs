@@ -141,6 +141,17 @@ namespace Unity.FPS.AI
             NavMeshAgent = GetComponent<NavMeshAgent>();
             m_SelfColliders = GetComponentsInChildren<Collider>();
 
+            // Snap agent to the nearest NavMesh point so the agent can initialize even
+            // when the prefab is placed slightly above or off the surface.
+            if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+            {
+                NavMeshAgent.Warp(hit.position);
+            }
+            else
+            {
+                Debug.LogWarning($"[EnemyController] {name} could not be placed on NavMesh — no surface within 2m.", this);
+            }
+
             var gameFlowManager = FindAnyObjectByType<GameFlowManager>();
             DebugUtility.HandleErrorIfNullFindObject<GameFlowManager, EnemyController>(gameFlowManager, this);
             m_GameFlowManager = gameFlowManager;
@@ -166,7 +177,7 @@ namespace Unity.FPS.AI
             onAttack += DetectionModule.OnAttack;
 
             var navigationModules = GetComponentsInChildren<NavigationModule>();
-            DebugUtility.HandleWarningIfDuplicateObjects<DetectionModule, EnemyController>(detectionModules.Length,
+            DebugUtility.HandleWarningIfDuplicateObjects<NavigationModule, EnemyController>(navigationModules.Length,
                 this, gameObject);
             // Override navmesh agent data
             if (navigationModules.Length > 0)
@@ -240,6 +251,7 @@ namespace Unity.FPS.AI
             // at every frame, this tests for conditions to kill the enemy
             if (transform.position.y < SelfDestructYHeight)
             {
+                m_EnemyManager?.UnregisterEnemy(this);
                 Destroy(gameObject);
                 return;
             }
@@ -328,7 +340,7 @@ namespace Unity.FPS.AI
 
         public void SetNavDestination(Vector3 destination)
         {
-            if (NavMeshAgent)
+            if (NavMeshAgent && NavMeshAgent.isActiveAndEnabled && NavMeshAgent.isOnNavMesh)
             {
                 NavMeshAgent.SetDestination(destination);
             }
@@ -440,7 +452,7 @@ namespace Unity.FPS.AI
             }
         }
 
-        public bool TryAtack(Vector3 enemyPosition)
+        public bool TryAttack(Vector3 enemyPosition)
         {
             if (m_GameFlowManager.GameIsEnding)
                 return false;

@@ -80,6 +80,7 @@ namespace Unity.FPS.Gameplay
             if (PickupVfxPrefab)
             {
                 var pickupVfxInstance = Instantiate(PickupVfxPrefab, transform.position, Quaternion.identity);
+                Destroy(pickupVfxInstance, 5f);
             }
 
             m_HasPlayedFeedback = true;
