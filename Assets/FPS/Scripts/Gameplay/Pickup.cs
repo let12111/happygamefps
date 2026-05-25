@@ -79,8 +79,8 @@ namespace Unity.FPS.Gameplay
 
             if (PickupVfxPrefab)
             {
-                var pickupVfxInstance = Instantiate(PickupVfxPrefab, transform.position, Quaternion.identity);
-                Destroy(pickupVfxInstance, 5f);
+                var vfx = GameObjectPoolManager.Instance.Get(PickupVfxPrefab, transform.position, Quaternion.identity);
+                GameObjectPoolManager.Instance.ReleaseDelayed(vfx, 5f);
             }
 
             m_HasPlayedFeedback = true;

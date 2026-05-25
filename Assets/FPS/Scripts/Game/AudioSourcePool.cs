@@ -21,6 +21,8 @@ namespace Unity.FPS.Game
             }
         }
 
+        const int MaxPoolSize = 32;
+        int m_TotalCreated;
         readonly Queue<AudioSource> m_Pool = new Queue<AudioSource>();
 
         void Awake()
@@ -52,6 +54,10 @@ namespace Unity.FPS.Game
                     return source;
                 }
             }
+
+            m_TotalCreated++;
+            if (m_TotalCreated > MaxPoolSize)
+                Debug.LogWarning($"[AudioSourcePool] Pool exceeded {MaxPoolSize} sources ({m_TotalCreated} active). Too many simultaneous SFX.");
 
             var go = new GameObject("PooledAudioSource");
             go.transform.SetParent(transform);

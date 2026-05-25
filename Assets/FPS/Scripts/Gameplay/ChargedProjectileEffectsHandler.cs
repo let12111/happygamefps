@@ -16,6 +16,8 @@ namespace Unity.FPS.Gameplay
 
         MeshRenderer[] m_AffectedRenderers;
         ProjectileBase m_ProjectileBase;
+        MaterialPropertyBlock m_PropertyBlock;
+        static readonly int k_ColorPropertyId = Shader.PropertyToID("_Color");
 
         void Awake()
         {
@@ -24,10 +26,7 @@ namespace Unity.FPS.Gameplay
                 m_ProjectileBase, this, gameObject);
 
             m_AffectedRenderers = ChargingObject.GetComponentsInChildren<MeshRenderer>();
-            foreach (var ren in m_AffectedRenderers)
-            {
-                ren.sharedMaterial = Instantiate(ren.sharedMaterial);
-            }
+            m_PropertyBlock = new MaterialPropertyBlock();
         }
 
         void OnEnable()
@@ -43,10 +42,13 @@ namespace Unity.FPS.Gameplay
         void OnShoot()
         {
             ChargingObject.transform.localScale = Scale.GetValueFromRatio(m_ProjectileBase.InitialCharge);
+            UnityEngine.Color targetColor = Color.GetValueFromRatio(m_ProjectileBase.InitialCharge);
 
             foreach (var ren in m_AffectedRenderers)
             {
-                ren.sharedMaterial.SetColor("_Color", Color.GetValueFromRatio(m_ProjectileBase.InitialCharge));
+                ren.GetPropertyBlock(m_PropertyBlock);
+                m_PropertyBlock.SetColor(k_ColorPropertyId, targetColor);
+                ren.SetPropertyBlock(m_PropertyBlock);
             }
         }
     }

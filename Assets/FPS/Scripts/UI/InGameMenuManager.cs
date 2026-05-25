@@ -39,6 +39,11 @@ namespace Unity.FPS.UI
         private InputAction m_CancelAction;
         private InputAction m_NavigateAction;
         private InputAction m_MenuAction;
+        private InputAction m_ClickAction;
+
+        const string k_PrefSensitivity = "LookSensitivity";
+        const string k_PrefShadows = "ShadowsEnabled";
+        const string k_PrefFramerate = "FramerateEnabled";
 
         [Inject]
         public void Construct(PlayerInputHandler playerInputsHandler, FramerateCounter framerateCounter)
@@ -54,41 +59,33 @@ namespace Unity.FPS.UI
 
             MenuRoot.SetActive(false);
 
-            LookSensitivitySlider.value = m_PlayerInputsHandler.LookSensitivity;
+            LoadSettings();
+
             LookSensitivitySlider.onValueChanged.AddListener(OnMouseSensitivityChanged);
-
-            ShadowsToggle.isOn = QualitySettings.shadows != ShadowQuality.Disable;
             ShadowsToggle.onValueChanged.AddListener(OnShadowsChanged);
-
             InvincibilityToggle.isOn = m_PlayerHealth.Invincible;
             InvincibilityToggle.onValueChanged.AddListener(OnInvincibilityChanged);
-
-            FramerateToggle.isOn = m_FramerateCounter.UIText.gameObject.activeSelf;
             FramerateToggle.onValueChanged.AddListener(OnFramerateCounterChanged);
 
             m_SubmitAction = InputSystem.actions.FindAction("UI/Submit");
             m_CancelAction = InputSystem.actions.FindAction("UI/Cancel");
             m_NavigateAction = InputSystem.actions.FindAction("UI/Navigate");
             m_MenuAction = InputSystem.actions.FindAction("UI/Menu");
+            m_ClickAction = InputSystem.actions.FindAction("UI/Click");
 
             m_SubmitAction.Enable();
             m_CancelAction.Enable();
             m_NavigateAction.Enable();
             m_MenuAction.Enable();
+            m_ClickAction?.Enable();
         }
 
         void Update()
         {
-            if (!MenuRoot.activeSelf && Mouse.current.leftButton.wasPressedThisFrame)
+            if (!MenuRoot.activeSelf && (m_ClickAction?.WasPressedThisFrame() ?? false))
             {
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
-            }
-
-            if (Keyboard.current.escapeKey.wasPressedThisFrame)
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
             }
 
             if (m_MenuAction.WasPressedThisFrame()
@@ -140,14 +137,33 @@ namespace Unity.FPS.UI
             }
         }
 
+        void LoadSettings()
+        {
+            float sensitivity = PlayerPrefs.GetFloat(k_PrefSensitivity, m_PlayerInputsHandler.LookSensitivity);
+            m_PlayerInputsHandler.LookSensitivity = sensitivity;
+            LookSensitivitySlider.value = sensitivity;
+
+            bool shadowsOn = PlayerPrefs.GetInt(k_PrefShadows, 1) == 1;
+            QualitySettings.shadows = shadowsOn ? ShadowQuality.All : ShadowQuality.Disable;
+            ShadowsToggle.isOn = shadowsOn;
+
+            bool framerateOn = PlayerPrefs.GetInt(k_PrefFramerate, 0) == 1;
+            m_FramerateCounter.UIText.gameObject.SetActive(framerateOn);
+            FramerateToggle.isOn = framerateOn;
+        }
+
         void OnMouseSensitivityChanged(float newValue)
         {
-            m_PlayerInputsHandler.LookSensitivity = newValue;
+            m_PlayerInputsHandler.LookSensitivity = Mathf.Max(0.001f, newValue);
+            PlayerPrefs.SetFloat(k_PrefSensitivity, m_PlayerInputsHandler.LookSensitivity);
+            PlayerPrefs.Save();
         }
 
         void OnShadowsChanged(bool newValue)
         {
             QualitySettings.shadows = newValue ? ShadowQuality.All : ShadowQuality.Disable;
+            PlayerPrefs.SetInt(k_PrefShadows, newValue ? 1 : 0);
+            PlayerPrefs.Save();
         }
 
         void OnInvincibilityChanged(bool newValue)
@@ -158,6 +174,8 @@ namespace Unity.FPS.UI
         void OnFramerateCounterChanged(bool newValue)
         {
             m_FramerateCounter.UIText.gameObject.SetActive(newValue);
+            PlayerPrefs.SetInt(k_PrefFramerate, newValue ? 1 : 0);
+            PlayerPrefs.Save();
         }
 
         public void OnShowControlButtonClicked(bool show)
@@ -176,6 +194,7 @@ namespace Unity.FPS.UI
             m_CancelAction?.Disable();
             m_NavigateAction?.Disable();
             m_MenuAction?.Disable();
+            m_ClickAction?.Disable();
         }
     }
 }
