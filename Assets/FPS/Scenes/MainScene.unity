@@ -6890,7 +6890,7 @@ PrefabInstance:
     - target: {fileID: 298744117520805562, guid: 761cdc9e4e883334cbdcea062d0befa7,
         type: 3}
       propertyPath: StartingWeapons.Array.size
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 298744117520805562, guid: 761cdc9e4e883334cbdcea062d0befa7,
         type: 3}
@@ -6903,6 +6903,12 @@ PrefabInstance:
       propertyPath: 'StartingWeapons.Array.data[2]'
       value: 
       objectReference: {fileID: 8323776800172828795, guid: 31d97e822763d1f4cb769f7e3f7f7333,
+        type: 3}
+    - target: {fileID: 298744117520805562, guid: 761cdc9e4e883334cbdcea062d0befa7,
+        type: 3}
+      propertyPath: 'StartingWeapons.Array.data[3]'
+      value: 
+      objectReference: {fileID: 2000010000000000003, guid: 1f2e3d4c5b6a798867564534231201f0,
         type: 3}
     - target: {fileID: 783424908873546082, guid: 761cdc9e4e883334cbdcea062d0befa7,
         type: 3}

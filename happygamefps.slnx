@@ -5,4 +5,5 @@
   <Project Path="fps.AI.csproj" />
   <Project Path="fps.Gameplay.csproj" />
   <Project Path="NavMeshComponentsEditor.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
 </Solution>
