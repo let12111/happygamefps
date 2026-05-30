@@ -6,6 +6,14 @@ using VContainer;
 
 namespace Unity.FPS.UI
 {
+    // ============================================================================
+    // FeedbackFlashHUD — два визуальных фидбека на здоровье игрока:
+    //  1) Короткая «вспышка» цветного экрана при получении урона или лечении
+    //     (красная/зелёная пелена, плавно исчезающая).
+    //  2) «Виньетка» по краям экрана когда HP в критической зоне — мигает в такт пульса.
+    //
+    // Источник — события Health.OnDamaged / OnHealed.
+    // ============================================================================
     public class FeedbackFlashHUD : MonoBehaviour
     {
         [Header("References")] [Tooltip("Image component of the flash")]
@@ -72,16 +80,20 @@ namespace Unity.FPS.UI
 
         void Update()
         {
+            // Виньетка появляется когда HP в «опасной зоне» (CriticalHealthRatio).
             if (m_PlayerHealth.IsCritical())
             {
                 VignetteCanvasGroup.gameObject.SetActive(true);
+                // Чем ниже HP — тем сильнее виньетка.
                 float vignetteAlpha =
                     (1 - (m_PlayerHealth.CurrentHealth / m_PlayerHealth.MaxHealth /
                           m_PlayerHealth.CriticalHealthRatio)) * CriticalHealthVignetteMaxAlpha;
 
                 if (m_GameFlowManager.GameIsEnding)
+                    // Игра кончается — статика, без пульсации.
                     VignetteCanvasGroup.alpha = vignetteAlpha;
                 else
+                    // Иначе пульсация по синусу — имитирует сердцебиение.
                     VignetteCanvasGroup.alpha =
                         ((Mathf.Sin(Time.time * PulsatingVignetteFrequency) / 2) + 0.5f) * vignetteAlpha;
             }
@@ -90,6 +102,7 @@ namespace Unity.FPS.UI
                 VignetteCanvasGroup.gameObject.SetActive(false);
             }
 
+            // Вспышка урона/лечения — линейно затухает за DamageFlashDuration.
             if (m_FlashActive)
             {
                 float normalizedTimeSinceDamage = (Time.time - m_LastTimeFlashStarted) / DamageFlashDuration;

@@ -1,9 +1,16 @@
-﻿using Unity.FPS.AI;
+using Unity.FPS.AI;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Unity.FPS.UI
 {
+    // ============================================================================
+    // CompassMarker — иконка на полоске компаса. Бывает двух типов:
+    //  - "Направление" (N/E/S/W) — текстовая метка магнитной стороны;
+    //  - "Враг" — графический маркер врага. Меняет цвет когда враг увидел игрока.
+    //
+    // Цвет переключается через подписку на onDetectedTarget/onLostTarget у EnemyController.
+    // ============================================================================
     public class CompassMarker : MonoBehaviour
     {
         [Tooltip("Main marker image")] public Image MainImage;
@@ -29,10 +36,12 @@ namespace Unity.FPS.UI
         {
             if (IsDirection && TextContent)
             {
+                // Маркер «N/E/S/W» — пишем буквы стороны света.
                 TextContent.text = textDirection;
             }
             else
             {
+                // Маркер врага — подписываемся на его события.
                 m_EnemyController = compassElement.transform.GetComponent<EnemyController>();
 
                 if (m_EnemyController)
@@ -45,6 +54,7 @@ namespace Unity.FPS.UI
             }
         }
 
+        // Враг увидел игрока — маркер в «тревожный» цвет.
         public void DetectTarget()
         {
             MainImage.color = AltColor;

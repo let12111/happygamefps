@@ -6,6 +6,16 @@ using UnityEngine.UI;
 
 namespace Unity.FPS.UI
 {
+    // ============================================================================
+    // AmmoCounter — иконка-полоска одного оружия в HUD. Несколько таких счётчиков
+    // показывают весь инвентарь игрока; активное выделяется яркостью и масштабом.
+    //
+    // Источник данных — WeaponController. Слушает AmmoPickupEvent чтобы обновить
+    // число «носимых» патронов вне основной анимации.
+    //
+    // FillBarColorChange (в RequireComponent) — добавляет «вспышки» полоски при
+    // пустой обойме / полном восстановлении.
+    // ============================================================================
     [RequireComponent(typeof(FillBarColorChange))]
     public class AmmoCounter : MonoBehaviour
     {
@@ -47,6 +57,7 @@ namespace Unity.FPS.UI
 
         PlayerWeaponsManager m_PlayerWeaponsManager;
         WeaponController m_Weapon;
+        // Кешируем — обновляем UI только при изменении (а не каждый кадр).
         int m_LastPhysicalBullets = -1;
 
         void Awake()
@@ -54,6 +65,7 @@ namespace Unity.FPS.UI
             EventManager.AddListener<AmmoPickupEvent>(OnAmmoPickup);
         }
 
+        // Реакция на подбор патронов — обновляем счётчик носимых.
         void OnAmmoPickup(AmmoPickupEvent evt)
         {
             if (evt.Weapon == m_Weapon)
@@ -69,6 +81,7 @@ namespace Unity.FPS.UI
             m_PlayerWeaponsManager = playerWeaponsManager;
             WeaponCounterIndex = weaponIndex;
             WeaponImage.sprite = weapon.WeaponIcon;
+            // Если у оружия нет физических патронов — скрываем счётчик.
             if (!weapon.HasPhysicalBullets)
                 BulletCounter.transform.parent.gameObject.SetActive(false);
             else
@@ -79,6 +92,7 @@ namespace Unity.FPS.UI
 
             Reload.gameObject.SetActive(false);
 
+            // Цифра «слот» (1, 2, 3...) для подсказки клавиш.
             WeaponIndexText.text = (WeaponCounterIndex + 1).ToString();
 
             FillBarColorChange.Initialize(1f, m_Weapon.GetAmmoNeededToShoot());
@@ -87,9 +101,11 @@ namespace Unity.FPS.UI
         void Update()
         {
             float currenFillRatio = m_Weapon.CurrentAmmoRatio;
+            // Плавно «гонимся» за реальным числом — не дёргается на доли кадра.
             AmmoFillImage.fillAmount = Mathf.Lerp(AmmoFillImage.fillAmount, currenFillRatio,
                 Time.deltaTime * AmmoFillMovementSharpness);
 
+            // Обновляем счётчик носимых патронов при изменении.
             if (m_Weapon.HasPhysicalBullets)
             {
                 int currentBullets = m_Weapon.GetCarriedPhysicalBullets();
@@ -100,16 +116,19 @@ namespace Unity.FPS.UI
                 }
             }
 
+            // Активное оружие — яркое и большое; остальные затемнены и уменьшены.
             bool isActiveWeapon = m_Weapon == m_PlayerWeaponsManager.GetActiveWeapon();
 
             CanvasGroup.alpha = Mathf.Lerp(CanvasGroup.alpha, isActiveWeapon ? 1f : UnselectedOpacity,
                 Time.deltaTime * 10);
             transform.localScale = Vector3.Lerp(transform.localScale, isActiveWeapon ? Vector3.one : UnselectedScale,
                 Time.deltaTime * 10);
+            // Цифровые клавиши показываем только для НЕактивного оружия — на активное-то они не нужны.
             ControlKeysRoot.SetActive(!isActiveWeapon);
 
             FillBarColorChange.UpdateVisual(currenFillRatio);
 
+            // «RELOAD» подсказка — когда обойма пуста, но патроны есть.
             Reload.gameObject.SetActive(m_Weapon.GetCarriedPhysicalBullets() > 0 && m_Weapon.GetCurrentAmmo() == 0 && m_Weapon.IsWeaponActive);
         }
 

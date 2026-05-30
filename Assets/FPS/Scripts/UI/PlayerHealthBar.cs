@@ -6,6 +6,13 @@ using VContainer;
 
 namespace Unity.FPS.UI
 {
+    // ============================================================================
+    // PlayerHealthBar — полоска HP игрока в HUD. Обновляется по событиям
+    // OnDamaged/OnHealed (а не каждый кадр) — экономия в Update.
+    //
+    // DI через [Inject]: PlayerCharacterController приходит из GameLifetimeScope,
+    // не нужно искать его FindObject'ом.
+    // ============================================================================
     public class PlayerHealthBar : MonoBehaviour
     {
         [Tooltip("Image component dispplaying current health")]
@@ -37,6 +44,7 @@ namespace Unity.FPS.UI
             }
         }
 
+        // Лямбды-обёртки с одной целью — у OnDamaged и OnHealed разные сигнатуры.
         void OnHealthChanged(float amount, GameObject source) => UpdateHealthBar();
         void OnHealthHealed(float amount) => UpdateHealthBar();
 

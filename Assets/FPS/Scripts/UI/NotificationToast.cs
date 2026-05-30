@@ -1,7 +1,14 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace Unity.FPS.UI
 {
+    // ============================================================================
+    // NotificationToast — «всплывашка» с текстом, которая плавно появляется,
+    // висит VisibleDuration секунд, плавно исчезает и удаляется.
+    //
+    // Жизненный цикл управляется CanvasGroup.alpha. Используется для уведомлений
+    // («Подобран ключ», «Осталось 3 врага» и т.п.). Создаётся NotificationHUDManager'ом.
+    // ============================================================================
     public class NotificationToast : MonoBehaviour
     {
         [Tooltip("Text content that will display the notification text")]
@@ -18,6 +25,7 @@ namespace Unity.FPS.UI
         public bool Initialized { get; private set; }
         float m_InitTime;
 
+        // Общее время жизни — нужно UITable для расчёта расстояний.
         public float TotalRunTime => VisibleDuration + FadeInDuration + FadeOutDuration;
 
         public void Initialize(string text)
@@ -34,6 +42,7 @@ namespace Unity.FPS.UI
             if (Initialized)
             {
                 float timeSinceInit = Time.time - m_InitTime;
+                // Три фазы: fade-in → hold → fade-out → destroy.
                 if (timeSinceInit < FadeInDuration)
                 {
                     // fade in

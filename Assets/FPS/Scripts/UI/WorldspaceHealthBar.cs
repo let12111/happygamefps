@@ -1,9 +1,17 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Unity.FPS.UI
 {
+    // ============================================================================
+    // WorldspaceHealthBar — полоска HP «в мире», висящая над врагом.
+    //
+    // Работает в World Space Canvas. Нюансы:
+    //  - смотрит на камеру через LookAt — чтобы выглядеть «билбордом»;
+    //  - кеширует Camera.main в Start (Camera.main внутри = FindWithTag, дорого);
+    //  - при HideFullHealthBar=true скрывается на полном HP (показывается только когда били).
+    // ============================================================================
     public class WorldspaceHealthBar : MonoBehaviour
     {
         [Tooltip("Health component to track")] public Health Health;
@@ -22,6 +30,7 @@ namespace Unity.FPS.UI
 
         void Start()
         {
+            // Кешируем Camera.main один раз. См. CLAUDE.md «Camera.main Caching».
             m_Camera = Camera.main;
         }
 
@@ -32,11 +41,15 @@ namespace Unity.FPS.UI
             float fill = Health.CurrentHealth / Health.MaxHealth;
             HealthBarImage.fillAmount = fill;
 
+            // Билборд: полоска всегда повёрнута лицом к камере.
             HealthBarPivot.LookAt(m_Camera.transform.position);
 
+            // Скрываем при полном HP — каждый дополнительный UI-элемент в кадре
+            // это лишний DrawCall, лучше показывать только когда есть смысл.
             if (HideFullHealthBar)
             {
                 bool shouldBeVisible = fill < 1f;
+                // SetActive вызываем только при смене состояния — он не бесплатный.
                 if (shouldBeVisible != m_BarVisible)
                 {
                     m_BarVisible = shouldBeVisible;

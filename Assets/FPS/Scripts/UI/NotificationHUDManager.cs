@@ -5,6 +5,14 @@ using VContainer;
 
 namespace Unity.FPS.UI
 {
+    // ============================================================================
+    // NotificationHUDManager — спавнит NotificationToast'ы в ответ на события:
+    //  - подбор оружия (кроме первого, чтобы не сбивать UX в начале игры);
+    //  - разблокировка джетпака;
+    //  - текст из ObjectiveUpdateEvent.NotificationText.
+    //
+    // Зависимости (PlayerWeaponsManager, Jetpack) приходят через DI.
+    // ============================================================================
     public class NotificationHUDManager : MonoBehaviour
     {
         [Tooltip("UI panel containing the layoutGroup for displaying notifications")]
@@ -33,12 +41,15 @@ namespace Unity.FPS.UI
 
         void OnObjectiveUpdateEvent(ObjectiveUpdateEvent evt)
         {
+            // NotificationText опционален — пустой не показываем.
             if (!string.IsNullOrEmpty(evt.NotificationText))
                 CreateNotification(evt.NotificationText);
         }
 
         void OnPickupWeapon(WeaponController weaponController, int index)
         {
+            // Первое оружие (index 0) — стартовое, не показываем уведомление.
+            // Иначе игрок видел бы «получено оружие» сразу при загрузке.
             if (index != 0)
                 CreateNotification($"Picked up weapon : {weaponController.WeaponName}");
         }
@@ -51,6 +62,7 @@ namespace Unity.FPS.UI
         public void CreateNotification(string text)
         {
             GameObject notificationInstance = Instantiate(NotificationPrefab, NotificationPanel);
+            // SetSiblingIndex(0) → новый toast сверху, старые сдвигаются вниз.
             notificationInstance.transform.SetSiblingIndex(0);
 
             NotificationToast toast = notificationInstance.GetComponent<NotificationToast>();

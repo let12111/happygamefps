@@ -6,6 +6,12 @@ using VContainer;
 
 namespace Unity.FPS.UI
 {
+    // ============================================================================
+    // JetpackCounter — индикатор топлива джетпака в HUD.
+    // Появляется только когда джетпак РАЗБЛОКИРОВАН — до этого скрыт.
+    //
+    // Использует FillBarColorChange для мигания пустой/полной полоски.
+    // ============================================================================
     public class JetpackCounter : MonoBehaviour
     {
         [Tooltip("Image component representing jetpack fuel")]
@@ -29,6 +35,7 @@ namespace Unity.FPS.UI
         void Awake()
         {
             FillBarColorChange.Initialize(1f, 0f);
+            // Начинаем скрытыми. SetActive снова — когда разблокируется.
             MainCanvasGroup.gameObject.SetActive(false);
             m_JetpackUnlockedShown = false;
         }
@@ -36,6 +43,7 @@ namespace Unity.FPS.UI
         void Update()
         {
             bool isUnlocked = m_Jetpack.IsJetpackUnlocked;
+            // Смена видимости — только при изменении (не каждый кадр).
             if (isUnlocked != m_JetpackUnlockedShown)
             {
                 m_JetpackUnlockedShown = isUnlocked;

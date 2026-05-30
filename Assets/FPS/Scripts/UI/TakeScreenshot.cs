@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using Unity.FPS.Game;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -8,6 +8,16 @@ using UnityEngine.UI;
 
 namespace Unity.FPS.UI
 {
+    // ============================================================================
+    // TakeScreenshot — функция «сделать скриншот» из меню паузы.
+    // Работает ТОЛЬКО в редакторе Unity (в билде кнопка отключается).
+    //
+    // Алгоритм: на кнопке выставляется флаг → следующий кадр скрываем UI меню,
+    // вызываем ScreenCapture.CaptureScreenshot → следующий кадр загружаем
+    // получившийся PNG обратно в UI как предпросмотр.
+    //
+    // Между «скрыть UI» и «снять» должен пройти кадр — иначе на скриншот попадёт сам UI.
+    // ============================================================================
     public class TakeScreenshot : MonoBehaviour
     {
         [Tooltip("Root of the screenshot panel in the menu")]
@@ -34,6 +44,7 @@ namespace Unity.FPS.UI
         {
 #if !UNITY_EDITOR
         // this feature is available only in the editor
+        // В билде сразу прячем панель и блокируем логику.
         ScreenshotPanel.SetActive(false);
         m_IsFeatureDisable = true;
 #else
@@ -53,6 +64,7 @@ namespace Unity.FPS.UI
 
         void Update()
         {
+            // RawImage без текстуры — некрасиво. Прячем пока её нет.
             PreviewImage.enabled = PreviewImage.texture != null;
 
             if (m_IsFeatureDisable)
@@ -60,6 +72,7 @@ namespace Unity.FPS.UI
 
             if (m_TakeScreenshot)
             {
+                // Прячем UI и снимаем экран.
                 m_MenuCanvas.alpha = 0;
                 ScreenCapture.CaptureScreenshot(GetPath());
                 m_TakeScreenshot = false;
@@ -67,10 +80,12 @@ namespace Unity.FPS.UI
                 return;
             }
 
+            // На следующий кадр — загружаем скриншот в UI и возвращаем меню.
             if (m_ScreenshotTaken)
             {
                 LoadScreenshot();
 #if UNITY_EDITOR
+                // Чтобы файл появился в Project view.
                 AssetDatabase.Refresh();
 #endif
 
@@ -79,6 +94,7 @@ namespace Unity.FPS.UI
             }
         }
 
+        // Привязывается из Button.OnClick в Inspector.
         public void OnTakeScreenshotButtonPressed()
         {
             m_TakeScreenshot = true;
@@ -90,6 +106,7 @@ namespace Unity.FPS.UI
             {
                 var bytes = File.ReadAllBytes(GetPath());
 
+                // Размер 2x2 — заглушка, LoadImage переопределит реальным.
                 m_Texture = new Texture2D(2, 2);
                 m_Texture.LoadImage(bytes);
                 m_Texture.Apply();

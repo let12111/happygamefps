@@ -1,9 +1,18 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Unity.FPS.UI
 {
+    // ============================================================================
+    // ObjectiveToast — плашка цели в HUD. Более сложная версия NotificationToast:
+    //  - есть заголовок, описание, счётчик;
+    //  - анимация «въезда» и «выезда» из угла экрана (layout padding по кривой);
+    //  - звук появления и завершения;
+    //  - после завершения цели — отдельная фаза-задержка перед исчезновением.
+    //
+    // Управляется ObjectiveHUDManager'ом.
+    // ============================================================================
     public class ObjectiveToast : MonoBehaviour
     {
         [Header("References")] [Tooltip("Text content that will display the title")]
@@ -21,6 +30,8 @@ namespace Unity.FPS.UI
         [Tooltip("Canvas used to fade in and out the content")]
         public CanvasGroup CanvasGroup;
 
+        // Layout group — двигая её padding.left по кривой, имитируем
+        // въезд плашки сбоку.
         [Tooltip("Layout group containing the objective")]
         public HorizontalOrVerticalLayoutGroup LayoutGroup;
 
@@ -59,6 +70,8 @@ namespace Unity.FPS.UI
         public void Initialize(string titleText, string descText, string counterText, bool isOptionnal, float delay)
         {
             // set the description for the objective, and forces the content size fitter to be recalculated
+            // ForceUpdateCanvases — пересчитать canvas сразу, не ждать следующего кадра.
+            // Нужно, потому что меняем тексты и сразу же запрашиваем layout-rebuild.
             Canvas.ForceUpdateCanvases();
 
             TitleTextContent.text = titleText;
@@ -94,6 +107,7 @@ namespace Unity.FPS.UI
         {
             float timeSinceFadeStarted = Time.time - m_StartFadeTime;
 
+            // Скрываем строку описания если оно пустое.
             SubTitleRect.gameObject.SetActive(!string.IsNullOrEmpty(DescriptionTextContent.text));
 
             if (m_IsFadingIn && !m_IsFadingOut)
@@ -119,6 +133,7 @@ namespace Unity.FPS.UI
                 // move in
                 if (timeSinceFadeStarted < MoveInDuration)
                 {
+                    // Padding меняется по кривой — это создаёт «въезжающий» эффект.
                     LayoutGroup.padding.left = (int) MoveInCurve.Evaluate(timeSinceFadeStarted / MoveInDuration);
 
                     if (GetComponent<RectTransform>())
@@ -178,6 +193,7 @@ namespace Unity.FPS.UI
             }
         }
 
+        // Lazy-создание AudioSource: только если действительно есть что играть.
         void PlaySound(AudioClip sound)
         {
             if (!sound)

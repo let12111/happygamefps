@@ -6,6 +6,9 @@ using VContainer;
 
 namespace Unity.FPS.UI
 {
+    // ============================================================================
+    // StanceHUD — иконка стойки игрока (стоит/присел). Реагирует на OnStanceChanged.
+    // ============================================================================
     public class StanceHUD : MonoBehaviour
     {
         [Tooltip("Image component for the stance sprites")]
@@ -28,6 +31,7 @@ namespace Unity.FPS.UI
         void Start()
         {
             m_Character.OnStanceChanged += OnStanceChanged;
+            // Сразу установить иконку — без этого до первого приседа была бы пустота.
             OnStanceChanged(m_Character.IsCrouching);
         }
 

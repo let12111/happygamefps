@@ -6,6 +6,14 @@ using VContainer;
 
 namespace Unity.FPS.UI
 {
+    // ============================================================================
+    // WeaponHUDManager — создаёт по одному AmmoCounter'у на каждое оружие игрока.
+    //
+    // Подписывается на три события PlayerWeaponsManager:
+    //  OnAddedWeapon       → новый AmmoCounter в HUD;
+    //  OnRemovedWeapon     → уничтожить связанный счётчик;
+    //  OnSwitchedToWeapon  → пересобрать layout (активное оружие крупнее).
+    // ============================================================================
     public class WeaponHUDManager : MonoBehaviour
     {
         [Tooltip("UI panel containing the layoutGroup for displaying weapon ammo")]
@@ -25,6 +33,8 @@ namespace Unity.FPS.UI
 
         void Start()
         {
+            // Если на старте уже есть активное оружие — добавляем его.
+            // Без этого первое оружие не получило бы свой счётчик до смены.
             WeaponController activeWeapon = m_PlayerWeaponsManager.GetActiveWeapon();
             if (activeWeapon)
             {
@@ -61,6 +71,7 @@ namespace Unity.FPS.UI
 
         void RemoveWeapon(WeaponController newWeapon, int weaponIndex)
         {
+            // Ищем счётчик по индексу слота оружия.
             int foundCounterIndex = -1;
             for (int i = 0; i < m_AmmoCounters.Count; i++)
             {
@@ -79,6 +90,8 @@ namespace Unity.FPS.UI
 
         void ChangeWeapon(WeaponController weapon)
         {
+            // AmmoCounter сам меняет масштаб/прозрачность, нам остаётся пересобрать
+            // layout — это нужно чтобы соседи сдвинулись на новые позиции.
             UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(AmmoPanel);
         }
     }

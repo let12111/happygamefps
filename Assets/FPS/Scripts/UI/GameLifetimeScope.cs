@@ -9,11 +9,31 @@ namespace Unity.FPS.UI
 {
     // Composition root for VContainer DI.
     // Add this component to a GameObject only in gameplay scenes (MainScene, SecondaryScene).
+    // ============================================================================
+    // GameLifetimeScope — «корневой контейнер» VContainer для DI в игровых сценах.
+    //
+    // Зачем: до этого скрипты искали зависимости через FindAnyObjectByType, что:
+    //  - медленно (поиск по всей сцене);
+    //  - плохо тестируется (нельзя подменить на мок);
+    //  - не показывает зависимости явно.
+    //
+    // Эта рефакторинг-миграция отражена в memory/project_di_vcontainer.md.
+    //
+    // LifetimeScope автоматически вызывает Configure() при загрузке сцены.
+    // Мы регистрируем все сервисы как Instance'ы (уже существующие в сцене),
+    // потом в BuildCallback вкатываем зависимости во все потребители.
+    // ============================================================================
     public class GameLifetimeScope : LifetimeScope
     {
         protected override void Configure(IContainerBuilder builder)
         {
             // --- Register services (injectable by others) ---
+            // FindObjectsInactive.Include — менеджер мог стоять на выключенном
+            // объекте (например, до загрузки уровня). Без Include мы бы его не нашли.
+            //
+            // AsImplementedInterfaces — регистрируем под все имплементируемые интерфейсы
+            // (IActorsManager, IGameFlowManager). AsSelf — ещё и под сам класс.
+            // Это позволяет инжектить как «по интерфейсу», так и «по конкретному типу».
 
             var actorsManager = FindAnyObjectByType<ActorsManager>(FindObjectsInactive.Include);
             if (actorsManager) builder.RegisterInstance(actorsManager).AsImplementedInterfaces().AsSelf();
@@ -46,6 +66,8 @@ namespace Unity.FPS.UI
             if (framerateCounter) builder.RegisterInstance(framerateCounter);
 
             // --- Inject dependencies into scene components after container is built ---
+            // VContainer сам не вкатывает зависимости в существующие на сцене MonoBehaviour'ы —
+            // только в те, что он сам создал. Поэтому пробегаем по всем потребителям руками.
             builder.RegisterBuildCallback(InjectSceneComponents);
         }
 
@@ -65,6 +87,8 @@ namespace Unity.FPS.UI
             InjectAll<WeaponHUDManager>(container);
         }
 
+        // Generic-helper: для каждого экземпляра T в сцене вызвать container.Inject —
+        // это найдёт [Inject]-методы и вызовет их с подходящими зависимостями.
         void InjectAll<T>(IObjectResolver container) where T : MonoBehaviour
         {
             foreach (var c in FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None))
