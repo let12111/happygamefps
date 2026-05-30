@@ -1,8 +1,20 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using UnityEngine;
 
 namespace Unity.FPS.AI
 {
+    // ============================================================================
+    // EnemyMobile — мобильный враг (ходит/летит по NavMesh).
+    //
+    // Простой конечный автомат из 3 состояний:
+    //   Patrol → Follow → Attack (и обратно).
+    //
+    // Переходы:
+    //   Patrol → Follow:    при срабатывании DetectionModule (onDetectedTarget).
+    //   Follow → Attack:    когда видим цель И она в радиусе атаки.
+    //   Attack → Follow:    когда цель вышла из радиуса атаки.
+    //   * → Patrol:         при потере цели (onLostTarget).
+    // ============================================================================
     [RequireComponent(typeof(EnemyController))]
     public class EnemyMobile : MonoBehaviour
     {
@@ -15,6 +27,8 @@ namespace Unity.FPS.AI
 
         public Animator Animator;
 
+        // 0.5 = когда расстояние до цели ≤ половине радиуса атаки, останавливаемся.
+        // Это нужно чтобы не «нависать» прямо над игроком.
         [Tooltip("Fraction of the enemy's attack range at which it will stop moving towards target while attacking")]
         [Range(0f, 1f)]
         public float AttackStopDistanceRatio = 0.5f;
@@ -43,6 +57,7 @@ namespace Unity.FPS.AI
             DebugUtility.HandleErrorIfNullGetComponent<EnemyController, EnemyMobile>(m_EnemyController, this,
                 gameObject);
 
+            // Подписки на события базового класса.
             m_EnemyController.onAttack += OnAttack;
             m_EnemyController.onDetectedTarget += OnDetectedTarget;
             m_EnemyController.onLostTarget += OnLostTarget;
@@ -67,16 +82,19 @@ namespace Unity.FPS.AI
             float moveSpeed = m_EnemyController.NavMeshAgent.velocity.magnitude;
 
             // Update animator speed parameter
+            // Аниматор использует MoveSpeed для blend tree (idle/walk/run).
             Animator.SetFloat(k_AnimMoveSpeedParameter, moveSpeed);
 
             // changing the pitch of the movement sound depending on the movement speed
+            // Звук двигателя меняет тон в зависимости от скорости — естественнее.
             m_AudioSource.pitch = Mathf.Lerp(PitchDistortionMovementSpeed.Min, PitchDistortionMovementSpeed.Max,
                 moveSpeed / m_EnemyController.NavMeshAgent.speed);
         }
 
+        // Переходы между состояниями.
         void UpdateAiStateTransitions()
         {
-            // Handle transitions 
+            // Handle transitions
             switch (AiState)
             {
                 case AIState.Follow:
@@ -84,6 +102,7 @@ namespace Unity.FPS.AI
                     if (m_EnemyController.IsSeeingTarget && m_EnemyController.IsTargetInAttackRange)
                     {
                         AiState = AIState.Attack;
+                        // Останавливаемся (set destination = текущая позиция).
                         m_EnemyController.SetNavDestination(transform.position);
                     }
 
@@ -99,16 +118,20 @@ namespace Unity.FPS.AI
             }
         }
 
+        // Поведение в каждом состоянии.
         void UpdateCurrentAiState()
         {
-            // Handle logic 
+            // Handle logic
             switch (AiState)
             {
                 case AIState.Patrol:
+                    // Двигаемся по точкам маршрута.
                     m_EnemyController.UpdatePathDestination();
                     m_EnemyController.SetNavDestination(m_EnemyController.GetDestinationOnPath());
                     break;
                 case AIState.Follow:
+                    // ВАЖНО: KnownDetectedTarget мог стать null между кадрами (память
+                    // про цель истекла). Без этой проверки был NPE — см. memory/project_code_audit_may2026.md.
                     if (m_EnemyController.KnownDetectedTarget == null) { AiState = AIState.Patrol; break; }
                     m_EnemyController.SetNavDestination(m_EnemyController.KnownDetectedTarget.transform.position);
                     m_EnemyController.OrientTowards(m_EnemyController.KnownDetectedTarget.transform.position);
@@ -116,6 +139,7 @@ namespace Unity.FPS.AI
                     break;
                 case AIState.Attack:
                     if (m_EnemyController.KnownDetectedTarget == null) { AiState = AIState.Patrol; break; }
+                    // Если ещё далеко (но в радиусе атаки) — идём ближе.
                     if (Vector3.Distance(m_EnemyController.KnownDetectedTarget.transform.position,
                             m_EnemyController.DetectionModule.DetectionSourcePoint.position)
                         >= (AttackStopDistanceRatio * m_EnemyController.DetectionModule.AttackRange))
@@ -124,6 +148,7 @@ namespace Unity.FPS.AI
                     }
                     else
                     {
+                        // Достаточно близко — стоим.
                         m_EnemyController.SetNavDestination(transform.position);
                     }
 
@@ -145,6 +170,7 @@ namespace Unity.FPS.AI
                 AiState = AIState.Follow;
             }
 
+            // VFX «обнаружения» (восклицательный знак, искры).
             for (int i = 0; i < OnDetectVfx.Length; i++)
             {
                 OnDetectVfx[i].Play();
@@ -173,6 +199,7 @@ namespace Unity.FPS.AI
             Animator.SetBool(k_AnimAlertedParameter, false);
         }
 
+        // Случайная искра + триггер анимации удара.
         void OnDamaged()
         {
             if (RandomHitSparks.Length > 0)

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.AI;
@@ -6,9 +6,26 @@ using UnityEngine.Events;
 
 namespace Unity.FPS.AI
 {
+    // ============================================================================
+    // EnemyController — БАЗОВЫЙ класс всех врагов. Унифицирует общие вещи:
+    //  - здоровье + смерть + дроп лута;
+    //  - визуальные реакции на урон (вспышка тела, цвет глаза);
+    //  - управление NavMeshAgent (движение по NavMesh);
+    //  - привязка модулей DetectionModule и NavigationModule;
+    //  - управление оружием (одно или несколько с автосменой);
+    //  - регистрация в EnemyManager (для глобального счётчика).
+    //
+    // Конкретные подклассы (EnemyMobile, EnemyTurret) реализуют конечный
+    // автомат поведения (патруль/атака/...) поверх этой базы.
+    //
+    // [RequireComponent] жёстко требует Health (бьём по нему), Actor (фракция,
+    // AimPoint) и NavMeshAgent (даже у турелей — он используется для подсветки положения).
+    // ============================================================================
     [RequireComponent(typeof(Health), typeof(Actor), typeof(NavMeshAgent))]
     public class EnemyController : MonoBehaviour
     {
+        // Пара «рендерер + индекс материала» — для точечного override через
+        // PropertyBlock (см. OverheatBehavior, тот же приём).
         [System.Serializable]
         public struct RendererIndexData
         {
@@ -23,15 +40,18 @@ namespace Unity.FPS.AI
         }
 
         [Header("Parameters")]
+        // Самоудаление при падении за карту (как у игрока KillHeight).
         [Tooltip("The Y height at which the enemy will be automatically killed (if it falls off of the level)")]
         public float SelfDestructYHeight = -20f;
 
+        // Расстояние до следующей точки маршрута, при котором она считается достигнутой.
         [Tooltip("The distance at which the enemy considers that it has reached its current path destination point")]
         public float PathReachingRadius = 2f;
 
         [Tooltip("The speed at which the enemy rotates")]
         public float OrientationSpeed = 10f;
 
+        // Задержка перед удалением — для анимации смерти (падение, разваливание).
         [Tooltip("Delay after death where the GameObject is destroyed (to allow for animation)")]
         public float DeathDuration = 0f;
 
@@ -45,6 +65,7 @@ namespace Unity.FPS.AI
         [Header("Eye color")] [Tooltip("Material for the eye color")]
         public Material EyeColorMaterial;
 
+        // ColorUsageAttribute(true, true) = с альфой и HDR (для свечения глаза).
         [Tooltip("The default color of the bot's eye")] [ColorUsageAttribute(true, true)]
         public Color DefaultEyeColor;
 
@@ -54,6 +75,7 @@ namespace Unity.FPS.AI
         [Header("Flash on hit")] [Tooltip("The material used for the body of the hoverbot")]
         public Material BodyMaterial;
 
+        // Градиент эмиссии: вспышка попадания → возврат к нейтральному.
         [Tooltip("The gradient representing the color of the flash on hit")] [GradientUsageAttribute(true)]
         public Gradient OnHitBodyGradient;
 
@@ -84,6 +106,7 @@ namespace Unity.FPS.AI
         [Tooltip("Color of the sphere gizmo representing the detection range")]
         public Color DetectionRangeColor = Color.blue;
 
+        // События для подклассов — атака, обнаружение, потеря цели, урон.
         public UnityAction onAttack;
         public UnityAction onDetectedTarget;
         public UnityAction onLostTarget;
@@ -97,6 +120,7 @@ namespace Unity.FPS.AI
         MaterialPropertyBlock m_EyeColorMaterialPropertyBlock;
 
         public PatrolPath PatrolPath { get; set; }
+        // Прокси к DetectionModule — наследникам удобнее не идти через цепочку точек.
         public GameObject KnownDetectedTarget => DetectionModule.KnownDetectedTarget;
         public bool IsTargetInAttackRange => DetectionModule.IsTargetInAttackRange;
         public bool IsSeeingTarget => DetectionModule.IsSeeingTarget;
@@ -109,10 +133,14 @@ namespace Unity.FPS.AI
         IActorsManager m_ActorsManager;
         Health m_Health;
         Actor m_Actor;
+        // Свои коллайдеры — нужно игнорировать при проверке line-of-sight, чтобы
+        // враг не «врезался лучом в свою же грудь».
         Collider[] m_SelfColliders;
         IGameFlowManager m_GameFlowManager;
         bool m_WasDamagedThisFrame;
+        // Дросселирование детекции: считаем не каждый кадр (см. CLAUDE.md).
         float m_NextDetectionTime;
+        // Если false — Update НЕ дёргает SetPropertyBlock (экономия).
         bool m_FlashActive;
         float m_LastTimeWeaponSwapped = Mathf.NegativeInfinity;
         int m_CurrentWeaponIndex;
@@ -122,6 +150,7 @@ namespace Unity.FPS.AI
 
         void Start()
         {
+            // Поиск менеджеров. См. memory/project_di_vcontainer — это легаси, мигрируется на DI.
             var enemyManager = FindAnyObjectByType<EnemyManager>();
             DebugUtility.HandleErrorIfNullFindObject<EnemyManager, EnemyController>(enemyManager, this);
             m_EnemyManager = enemyManager;
@@ -130,6 +159,7 @@ namespace Unity.FPS.AI
             DebugUtility.HandleErrorIfNullFindObject<ActorsManager, EnemyController>(actorsManager, this);
             m_ActorsManager = actorsManager;
 
+            // Регистрация в EnemyManager — увеличит счётчик NumberOfEnemiesTotal.
             m_EnemyManager.RegisterEnemy(this);
 
             m_Health = GetComponent<Health>();
@@ -143,6 +173,8 @@ namespace Unity.FPS.AI
 
             // Snap agent to the nearest NavMesh point so the agent can initialize even
             // when the prefab is placed slightly above or off the surface.
+            // Враг может быть положен чуть выше пола — Warp подтянет его на NavMesh.
+            // Без этого NavMeshAgent.isOnNavMesh = false и SetDestination ничего не сделает.
             if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 2f, NavMesh.AllAreas))
             {
                 NavMeshAgent.Warp(hit.position);
@@ -165,6 +197,7 @@ namespace Unity.FPS.AI
             var weapon = GetCurrentWeapon();
             weapon.ShowWeapon(true);
 
+            // DetectionModule должен быть РОВНО ОДИН на враге.
             var detectionModules = GetComponentsInChildren<DetectionModule>();
             DebugUtility.HandleErrorIfNoComponentFound<DetectionModule, EnemyController>(detectionModules.Length, this,
                 gameObject);
@@ -172,10 +205,13 @@ namespace Unity.FPS.AI
                 this, gameObject);
             // Initialize detection module
             DetectionModule = detectionModules[0];
+            // Прокидываем события — наш onDetectedTarget сработает, когда обнаружит.
             DetectionModule.onDetectedTarget += OnDetectedTarget;
             DetectionModule.onLostTarget += OnLostTarget;
+            // А наш onAttack триггерит анимацию атаки в модуле.
             onAttack += DetectionModule.OnAttack;
 
+            // NavigationModule (опционально) — параметры скорости/ускорения для NavMeshAgent.
             var navigationModules = GetComponentsInChildren<NavigationModule>();
             DebugUtility.HandleWarningIfDuplicateObjects<NavigationModule, EnemyController>(navigationModules.Length,
                 this, gameObject);
@@ -188,6 +224,7 @@ namespace Unity.FPS.AI
                 NavMeshAgent.acceleration = m_NavigationModule.Acceleration;
             }
 
+            // Сбор рендереров — для эмиссии «глаза» и «тела».
             foreach (var renderer in GetComponentsInChildren<Renderer>(true))
             {
                 for (int i = 0; i < renderer.sharedMaterials.Length; i++)
@@ -206,6 +243,7 @@ namespace Unity.FPS.AI
 
             m_BodyFlashMaterialPropertyBlock = new MaterialPropertyBlock();
             // Set initial body emission to the gradient's rest state (t=1)
+            // Конец градиента — состояние «не бьют», стартовое.
             if (m_BodyRenderers.Count > 0)
             {
                 m_BodyFlashMaterialPropertyBlock.SetColor("_EmissionColor", OnHitBodyGradient.Evaluate(1f));
@@ -227,12 +265,16 @@ namespace Unity.FPS.AI
         {
             EnsureIsWithinLevelBounds();
 
+            // Дросселирование: детекция максимум 10 раз в секунду.
+            // 0.1с интервал не сильно влияет на ощущение от игры, но экономит CPU
+            // при большом количестве врагов в сцене. См. CLAUDE.md.
             if (Time.time >= m_NextDetectionTime)
             {
                 DetectionModule.HandleTargetDetection(m_Actor, m_SelfColliders);
                 m_NextDetectionTime = Time.time + 0.1f;
             }
 
+            // Анимация вспышки. Если флаг false — пропускаем SetPropertyBlock.
             if (m_FlashActive)
             {
                 float ratio = Mathf.Min((Time.time - m_LastTimeDamaged) / FlashOnHitDuration, 1f);
@@ -246,6 +288,7 @@ namespace Unity.FPS.AI
             m_WasDamagedThisFrame = false;
         }
 
+        // Падение за карту — самоуничтожение.
         void EnsureIsWithinLevelBounds()
         {
             // at every frame, this tests for conditions to kill the enemy
@@ -257,6 +300,7 @@ namespace Unity.FPS.AI
             }
         }
 
+        // Цель потеряна — гасим красный глаз.
         void OnLostTarget()
         {
             onLostTarget.Invoke();
@@ -270,6 +314,7 @@ namespace Unity.FPS.AI
             }
         }
 
+        // Цель обнаружена — зажигаем красный глаз.
         void OnDetectedTarget()
         {
             onDetectedTarget.Invoke();
@@ -283,6 +328,8 @@ namespace Unity.FPS.AI
             }
         }
 
+        // Плавный поворот к точке. ProjectOnPlane по Vector3.up — игнорируем вертикаль
+        // (враг не запрокидывает голову вверх к цели).
         public void OrientTowards(Vector3 lookPosition)
         {
             Vector3 lookDirection = Vector3.ProjectOnPlane(lookPosition - transform.position, Vector3.up).normalized;
@@ -304,6 +351,8 @@ namespace Unity.FPS.AI
             m_PathDestinationNodeIndex = 0;
         }
 
+        // Найти ближайшую к нам точку на маршруте — нужно при «возвращении к патрулю»
+        // (например, после преследования игрока).
         public void SetPathDestinationToClosestNode()
         {
             if (IsPathValid())
@@ -338,6 +387,7 @@ namespace Unity.FPS.AI
             }
         }
 
+        // Безопасно установить пункт назначения. Защиты от «агент не на NavMesh'е».
         public void SetNavDestination(Vector3 destination)
         {
             if (NavMeshAgent && NavMeshAgent.isActiveAndEnabled && NavMeshAgent.isOnNavMesh)
@@ -346,6 +396,7 @@ namespace Unity.FPS.AI
             }
         }
 
+        // Двигать индекс маршрута, когда дошли до текущей точки. inverseOrder — для разворота.
         public void UpdatePathDestination(bool inverseOrder = false)
         {
             if (IsPathValid())
@@ -356,6 +407,7 @@ namespace Unity.FPS.AI
                     // increment path destination index
                     m_PathDestinationNodeIndex =
                         inverseOrder ? (m_PathDestinationNodeIndex - 1) : (m_PathDestinationNodeIndex + 1);
+                    // Зацикливание — переходим через ноль/конец.
                     if (m_PathDestinationNodeIndex < 0)
                     {
                         m_PathDestinationNodeIndex += PatrolPath.PathNodes.Count;
@@ -372,18 +424,21 @@ namespace Unity.FPS.AI
         void OnDamaged(float damage, GameObject damageSource)
         {
             // test if the damage source is the player
+            // Не реагируем на урон от другого врага (например, дружественный огонь).
             if (damageSource && !damageSource.GetComponent<EnemyController>())
             {
                 // pursue the player
                 DetectionModule.OnDamaged(damageSource);
-                
+
                 onDamaged?.Invoke();
                 m_LastTimeDamaged = Time.time;
-            
+
                 // play the damage tick sound
+                // Один тик звука за кадр — иначе при многослойном уроне (от взрыва)
+                // получится «гул» из перекрывающихся звуков.
                 if (DamageTick && !m_WasDamagedThisFrame)
                     AudioUtility.CreateSFX(DamageTick, transform.position, AudioUtility.AudioGroups.DamageTick, 0f);
-            
+
                 m_WasDamagedThisFrame = true;
                 m_FlashActive = true;
             }
@@ -405,9 +460,11 @@ namespace Unity.FPS.AI
             }
 
             // this will call the OnDestroy function
+            // Задержка нужна для проигрыша анимации смерти.
             Destroy(gameObject, DeathDuration);
         }
 
+        // Чистим все подписки. Если этого не сделать — мёртвые ссылки в делегатах.
         void OnDestroy()
         {
             if (m_Health != null)
@@ -424,6 +481,7 @@ namespace Unity.FPS.AI
             }
         }
 
+        // Рисуем три сферы в редакторе: реквест-радиус, дальность обнаружения и атаки.
         void OnDrawGizmosSelected()
         {
             // Path reaching range
@@ -442,6 +500,7 @@ namespace Unity.FPS.AI
             }
         }
 
+        // Поворачиваем все оружия в точку (нужно для турелей и врагов с несколькими стволами).
         public void OrientWeaponsTowards(Vector3 lookPosition)
         {
             for (int i = 0; i < m_Weapons.Length; i++)
@@ -452,6 +511,8 @@ namespace Unity.FPS.AI
             }
         }
 
+        // Попытка атаки. Поворачиваем оружие, проверяем кулдаун, стреляем.
+        // Возвращает true, если действительно выстрелили.
         public bool TryAttack(Vector3 enemyPosition)
         {
             if (m_GameFlowManager.GameIsEnding)
@@ -459,16 +520,19 @@ namespace Unity.FPS.AI
 
             OrientWeaponsTowards(enemyPosition);
 
+            // Кулдаун после смены оружия — игрок видит «бот сменил пушку и не атакует мгновенно».
             if ((m_LastTimeWeaponSwapped + DelayAfterWeaponSwap) >= Time.time)
                 return false;
 
             // Shoot the weapon
+            // HandleShootInputs(false, true, false) = «я держу спуск» — годится для авто-оружия.
             bool didFire = GetCurrentWeapon().HandleShootInputs(false, true, false);
 
             if (didFire && onAttack != null)
             {
                 onAttack.Invoke();
 
+                // Если включена авто-смена — переключаемся на следующее оружие после выстрела.
                 if (SwapToNextWeapon && m_Weapons.Length > 1)
                 {
                     int nextWeaponIndex = (m_CurrentWeaponIndex + 1) % m_Weapons.Length;
@@ -479,6 +543,7 @@ namespace Unity.FPS.AI
             return didFire;
         }
 
+        // Случайный дроп: 0 — никогда, 1 — всегда, иначе по Random.value.
         public bool TryDropItem()
         {
             if (DropRate == 0 || LootPrefab == null)
@@ -492,6 +557,7 @@ namespace Unity.FPS.AI
         void FindAndInitializeAllWeapons()
         {
             // Check if we already found and initialized the weapons
+            // Lazy: ищем один раз и кешируем.
             if (m_Weapons == null)
             {
                 m_Weapons = GetComponentsInChildren<WeaponController>();
@@ -525,6 +591,7 @@ namespace Unity.FPS.AI
         {
             m_CurrentWeaponIndex = index;
             m_CurrentWeapon = m_Weapons[m_CurrentWeaponIndex];
+            // Запоминаем время смены, чтобы TryAttack не стрельнул мгновенно.
             if (SwapToNextWeapon)
             {
                 m_LastTimeWeaponSwapped = Time.time;
