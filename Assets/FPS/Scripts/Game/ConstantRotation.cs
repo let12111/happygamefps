@@ -1,14 +1,27 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace Unity.FPS.Game
 {
+    // ============================================================================
+    // ConstantRotation — крутит объект вокруг оси Y с постоянной скоростью.
+    // Используется для предметов в мире (пикапы), чтобы они «крутились»
+    // и были заметны игроку.
+    // ============================================================================
     public class ConstantRotation : MonoBehaviour
     {
+        // Градусы в секунду. 360 = один оборот в секунду.
         [Tooltip("Rotation angle per second")] public float RotatingSpeed = 360f;
 
+        // Update вызывается каждый кадр. Важно умножать на Time.deltaTime,
+        // иначе на высоком FPS объект будет крутиться быстрее, чем на низком.
+        // Time.deltaTime — время между кадрами в секундах, его умножение
+        // даёт стабильную скорость независимо от частоты кадров.
         void Update()
         {
             // Handle rotating
+            // Space.Self — вращаем вокруг СВОЕЙ оси Y (а не мировой).
+            // Если бы был Space.World, объект на наклонной платформе крутился бы
+            // вертикально вместо «по платформе».
             transform.Rotate(Vector3.up, RotatingSpeed * Time.deltaTime, Space.Self);
         }
     }
