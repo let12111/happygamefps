@@ -1,8 +1,18 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using UnityEngine;
 
 namespace Unity.FPS.Gameplay
 {
+    // ============================================================================
+    // WeaponFuelCellHandler — визуализирует расход топлива/ammo через «выезжающие»
+    // топливные ячейки на корпусе оружия. Чем меньше ammo, тем глубже спрятаны ячейки.
+    //
+    // Два режима:
+    //  - Simultaneous: все ячейки одновременно лерпятся по ammo ratio.
+    //  - Sequential: каждая ячейка реагирует на «свой» отрезок 0..1.
+    //    Например, при 4 ячейках первая реагирует на 0-0.25 ratio, вторая на 0.25-0.5, и т.д.
+    //    Это даёт эффект «постепенного опустошения».
+    // ============================================================================
     [RequireComponent(typeof(WeaponController))]
     public class WeaponFuelCellHandler : MonoBehaviour
     {
@@ -41,6 +51,7 @@ namespace Unity.FPS.Gameplay
 
             if (SimultaneousFuelCellsUsage)
             {
+                // Все ячейки двигаются вместе.
                 for (int i = 0; i < FuelCells.Length; i++)
                 {
                     FuelCells[i].transform.localPosition = Vector3.Lerp(FuelCellUsedPosition, FuelCellUnusedPosition,
@@ -49,12 +60,16 @@ namespace Unity.FPS.Gameplay
             }
             else
             {
+                // Каждая ячейка реагирует на «свой» 1/N интервал.
                 float length = FuelCells.Length;
                 for (int i = 0; i < FuelCells.Length; i++)
                 {
+                    // lim1..lim2 — диапазон ammo ratio, на который реагирует ячейка i.
                     float lim1 = i / length;
                     float lim2 = (i + 1) / length;
 
+                    // InverseLerp возвращает 0..1 относительно отрезка.
+                    // Если ratio ниже lim1 — 0; выше lim2 — 1; внутри — пропорция.
                     float value = Mathf.Clamp01(Mathf.InverseLerp(lim1, lim2, m_Weapon.CurrentAmmoRatio));
 
                     FuelCells[i].transform.localPosition =

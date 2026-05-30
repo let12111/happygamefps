@@ -1,21 +1,37 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using VContainer;
 
 namespace Unity.FPS.Gameplay
 {
+    // ============================================================================
+    // PlayerInputHandler — слой абстракции над вводом игрока.
+    //
+    // Зачем: PlayerCharacterController и PlayerWeaponsManager не должны знать
+    // про мышь, клавиатуру, геймпад. Они спрашивают абстрактные вещи —
+    // «нажат ли прыжок?», «куда смотрит мышка?». Если завтра переедем на
+    // новую систему ввода или добавим тач — поправим только этот файл.
+    //
+    // Использует Unity New Input System (InputSystem.actions из InputActionAsset).
+    // VContainer [Inject] — DI: IGameFlowManager автоматически приходит из
+    // GameLifetimeScope (см. UI/GameLifetimeScope.cs).
+    // ============================================================================
     public class PlayerInputHandler : MonoBehaviour
     {
         [Tooltip("Sensitivity multiplier for moving the camera around")]
         public float LookSensitivity = 1f;
 
+        // WebGL: мышь в браузере обрабатывается с другой акселерацией, сенс выше.
         [Tooltip("Additional sensitivity multiplier for WebGL")]
         public float WebGLLookSensitivityMultiplier = 0.25f;
 
+        // Триггер геймпада — это аналоговая ось. Считаем «нажатым» только когда
+        // больше TriggerAxisThreshold (защита от случайных микро-нажатий).
         [Tooltip("Limit to consider an input when using a trigger on a controller")]
         public float TriggerAxisThreshold = 0.4f;
 
+        // Опции инвертирования осей — кому-то удобнее наоборот.
         [Tooltip("Used to flip the vertical input axis")]
         public bool InvertYAxis = false;
 
@@ -24,8 +40,12 @@ namespace Unity.FPS.Gameplay
 
         IGameFlowManager m_GameFlowManager;
         PlayerCharacterController m_PlayerCharacterController;
+        // Запоминаем «удерживался ли огонь в прошлом кадре» — нужно для
+        // вычисления Down (только что нажали) и Released (только что отпустили).
         bool m_FireInputWasHeld;
 
+        // InputAction — это «именованное действие», за которым прячется набор
+        // конкретных кнопок/осей. Имена приходят из InputActions asset.
         private InputAction m_MoveAction;
         private InputAction m_LookAction;
         private InputAction m_JumpAction;
@@ -36,6 +56,8 @@ namespace Unity.FPS.Gameplay
         private InputAction m_ReloadAction;
         private InputAction m_NextWeaponAction;
 
+        // VContainer DI: при создании контейнер вызовет Construct и передаст менеджера.
+        // Так зависимости видны явно и заменяются на моки в тестах.
         [Inject]
         public void Construct(IGameFlowManager gameFlowManager)
         {
@@ -48,9 +70,11 @@ namespace Unity.FPS.Gameplay
             DebugUtility.HandleErrorIfNullGetComponent<PlayerCharacterController, PlayerInputHandler>(
                 m_PlayerCharacterController, this, gameObject);
 
+            // Локаем мышь в центре экрана — стандарт для FPS.
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
 
+            // Находим действия по их пути в asset'е.
             m_MoveAction = InputSystem.actions.FindAction("Player/Move");
             m_LookAction = InputSystem.actions.FindAction("Player/Look");
             m_JumpAction = InputSystem.actions.FindAction("Player/Jump");
@@ -60,7 +84,8 @@ namespace Unity.FPS.Gameplay
             m_CrouchAction = InputSystem.actions.FindAction("Player/Crouch");
             m_ReloadAction = InputSystem.actions.FindAction("Player/Reload");
             m_NextWeaponAction = InputSystem.actions.FindAction("Player/NextWeapon");
-            
+
+            // По умолчанию действия отключены — надо включить.
             m_MoveAction.Enable();
             m_LookAction.Enable();
             m_JumpAction.Enable();
@@ -72,6 +97,8 @@ namespace Unity.FPS.Gameplay
             m_NextWeaponAction.Enable();
         }
 
+        // Чистим за собой — действия после выгрузки сцены продолжали бы получать ввод.
+        // ?. защищает от случая «Start не выполнился».
         void OnDestroy()
         {
             m_MoveAction?.Disable();
@@ -85,11 +112,16 @@ namespace Unity.FPS.Gameplay
             m_NextWeaponAction?.Disable();
         }
 
+        // LateUpdate — после Update'ов всех скриптов. Запоминаем состояние огня,
+        // чтобы в следующем кадре можно было вычислить Down/Released.
         void LateUpdate()
         {
             m_FireInputWasHeld = GetFireInputHeld();
         }
 
+        // Можно ли сейчас обрабатывать ввод. Нельзя если:
+        //  - курсор разлочен (значит игрок в меню/настройках);
+        //  - игра завершается (затемнение, переход в финальную сцену).
         public bool CanProcessInput()
         {
             return Cursor.lockState == CursorLockMode.Locked && !m_GameFlowManager.GameIsEnding;
@@ -99,10 +131,13 @@ namespace Unity.FPS.Gameplay
         {
             if (CanProcessInput())
             {
+                // ReadValue<Vector2> для движения — (x, y) от WASD/стика.
                 var input = m_MoveAction.ReadValue<Vector2>();
+                // Y геймпад → Z игрока (вперёд). Y игрока (вверх) тут не нужен.
                 Vector3 move = new Vector3(input.x, 0f, input.y);
 
                 // constrain move input to a maximum magnitude of 1, otherwise diagonal movement might exceed the max move speed defined
+                // Диагональ (1,1) даст длину √2 — без зажатия игрок двигался бы по диагонали быстрее.
                 move = Vector3.ClampMagnitude(move, 1);
 
                 return move;
@@ -115,14 +150,16 @@ namespace Unity.FPS.Gameplay
         {
             if (!CanProcessInput())
                 return 0.0f;
-            
+
             float input = m_LookAction.ReadValue<Vector2>().x;
 
+            // Инверсия — для игроков, привыкших к обратному mapping'у.
             if (InvertXAxis)
                 input *= -1;
 
             input *= LookSensitivity;
-            
+
+            // Условная компиляция: только под WebGL применяем доп. множитель.
 #if UNITY_WEBGL
             // Mouse tends to be even more sensitive in WebGL due to mouse acceleration, so reduce it even more
             input *= WebGLLookSensitivityMultiplier;
@@ -135,14 +172,14 @@ namespace Unity.FPS.Gameplay
         {
             if (!CanProcessInput())
                 return 0.0f;
-            
+
             float input = m_LookAction.ReadValue<Vector2>().y;
 
             if (InvertYAxis)
                 input *= -1;
 
             input *= LookSensitivity;
-            
+
 #if UNITY_WEBGL
             // Mouse tends to be even more sensitive in WebGL due to mouse acceleration, so reduce it even more
             input *= WebGLLookSensitivityMultiplier;
@@ -151,6 +188,7 @@ namespace Unity.FPS.Gameplay
             return input;
         }
 
+        // WasPressedThisFrame — только момент нажатия (один кадр), не зажатие.
         public bool GetJumpInputDown()
         {
             if (CanProcessInput())
@@ -161,6 +199,7 @@ namespace Unity.FPS.Gameplay
             return false;
         }
 
+        // IsPressed — пока зажато.
         public bool GetJumpInputHeld()
         {
             if (CanProcessInput())
@@ -171,11 +210,13 @@ namespace Unity.FPS.Gameplay
             return false;
         }
 
+        // Огонь Down: сейчас зажат, а в прошлом кадре не был.
         public bool GetFireInputDown()
         {
             return GetFireInputHeld() && !m_FireInputWasHeld;
         }
 
+        // Огонь Released: сейчас не зажат, а в прошлом кадре был.
         public bool GetFireInputReleased()
         {
             return !GetFireInputHeld() && m_FireInputWasHeld;
@@ -241,6 +282,8 @@ namespace Unity.FPS.Gameplay
             return false;
         }
 
+        // Смена оружия колесом мыши: возвращаем +1, -1 или 0.
+        // Колесо назад (минус) → следующее оружие (1); вперёд (плюс) → предыдущее (-1).
         public int GetSwitchWeaponInput()
         {
             if (CanProcessInput())
@@ -249,7 +292,7 @@ namespace Unity.FPS.Gameplay
 
                 if (input > 0f)
                     return -1;
-                
+
                 if (input < 0f)
                     return 1;
             }
@@ -257,6 +300,7 @@ namespace Unity.FPS.Gameplay
             return 0;
         }
 
+        // Выбор оружия по цифровым клавишам 1-9. Возвращает номер слота или 0.
         public int GetSelectWeaponInput()
         {
             if (CanProcessInput())

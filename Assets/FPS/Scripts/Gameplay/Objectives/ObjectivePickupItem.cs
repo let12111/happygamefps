@@ -1,8 +1,19 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using UnityEngine;
 
 namespace Unity.FPS.Gameplay
 {
+    // ============================================================================
+    // ObjectivePickupItem — цель «подбери конкретный предмет».
+    //
+    // Слушает PickupEvent. Когда игрок что-то подобрал, проверяем — это наш предмет?
+    // Если да — закрываем цель. Сам предмет удаляется (или уже удалён пикапом).
+    //
+    // Нюанс: цель завершается даже если игрок не СМОГ подобрать предмет
+    // (например, попытка подобрать аптечку с полным HP). Это сделано специально:
+    // некоторые уровни используют пикап как «триггер дошёл до точки»,
+    // а не как реальный полезный предмет.
+    // ============================================================================
     public class ObjectivePickupItem : Objective
     {
         [Tooltip("Item to pickup to complete the objective")]
@@ -17,6 +28,7 @@ namespace Unity.FPS.Gameplay
 
         void OnPickupEvent(PickupEvent evt)
         {
+            // Игнорируем чужие подборы и повторы.
             if (IsCompleted || ItemToPickup != evt.Pickup)
                 return;
 
@@ -30,6 +42,7 @@ namespace Unity.FPS.Gameplay
             }
         }
 
+        // Чистим подписку, иначе после уничтожения сам объект остался бы в делегате.
         void OnDestroy()
         {
             EventManager.RemoveListener<PickupEvent>(OnPickupEvent);

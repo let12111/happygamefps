@@ -1,8 +1,20 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using UnityEngine;
 
 namespace Unity.FPS.Gameplay
 {
+    // ============================================================================
+    // ObjectiveKillEnemies — цель «убей N врагов».
+    //
+    // Два режима:
+    //  - MustKillAllEnemies = true: общее число пересчитывается динамически
+    //    (каждое убийство даёт нам RemainingEnemyCount + m_KillTotal).
+    //    Это полезно, когда враги спавнятся в течение уровня.
+    //  - MustKillAllEnemies = false: фиксированное число KillsToCompleteObjective.
+    //
+    // Дополнительно показывает «уведомления» когда осталось ≤ threshold врагов
+    // («3 enemies to kill left»).
+    // ============================================================================
     public class ObjectiveKillEnemies : Objective
     {
         [Tooltip("Chose whether you need to kill every enemies or only a minimum amount")]
@@ -14,6 +26,7 @@ namespace Unity.FPS.Gameplay
         [Tooltip("Start sending notification about remaining enemies when this amount of enemies is left")]
         public int NotificationEnemiesRemainingThreshold = 3;
 
+        // Сколько мы уже убили.
         int m_KillTotal;
 
         protected override void Start()
@@ -23,6 +36,7 @@ namespace Unity.FPS.Gameplay
             EventManager.AddListener<EnemyKillEvent>(OnEnemyKilled);
 
             // set a title and description specific for this type of objective, if it hasn't one
+            // Авто-заголовок если не задан.
             if (string.IsNullOrEmpty(Title))
                 Title = "Eliminate " + (MustKillAllEnemies ? "all the" : KillsToCompleteObjective.ToString()) +
                         " enemies";
@@ -38,9 +52,11 @@ namespace Unity.FPS.Gameplay
 
             m_KillTotal++;
 
+            // В режиме «убей всех» цель = всё, что мы уже убили + те, что ещё в сцене.
             if (MustKillAllEnemies)
                 KillsToCompleteObjective = evt.RemainingEnemyCount + m_KillTotal;
 
+            // Сколько ещё врагов до победы.
             int targetRemaining = MustKillAllEnemies
                 ? evt.RemainingEnemyCount
                 : KillsToCompleteObjective - m_KillTotal;
@@ -52,6 +68,7 @@ namespace Unity.FPS.Gameplay
             }
             else if (targetRemaining == 1)
             {
+                // Особый текст для последнего врага.
                 string notificationText = NotificationEnemiesRemainingThreshold >= targetRemaining
                     ? "One enemy left"
                     : string.Empty;
@@ -60,6 +77,7 @@ namespace Unity.FPS.Gameplay
             else
             {
                 // create a notification text if needed, if it stays empty, the notification will not be created
+                // Уведомление появляется только когда осталось мало.
                 string notificationText = NotificationEnemiesRemainingThreshold >= targetRemaining
                     ? targetRemaining + " enemies to kill left"
                     : string.Empty;

@@ -1,8 +1,16 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using UnityEngine;
 
 namespace Unity.FPS.Gameplay
 {
+    // ============================================================================
+    // ObjectiveReachPoint — цель «дойди до точки». Триггер: коллайдер с isTrigger=true.
+    // Когда игрок входит — цель закрывается.
+    //
+    // DestroyRoot — корень, который удалится по завершении. Это сделано, чтобы
+    // компас (CompassMarker, прикреплённый ВЫШЕ в иерархии) тоже удалился вместе
+    // с триггером, иначе остался бы «сирота».
+    // ============================================================================
     [RequireComponent(typeof(Collider))]
     public class ObjectiveReachPoint : Objective
     {
@@ -11,6 +19,7 @@ namespace Unity.FPS.Gameplay
 
         void Awake()
         {
+            // Если не задано — удаляем себя.
             if (DestroyRoot == null)
                 DestroyRoot = transform;
         }

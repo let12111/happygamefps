@@ -1,10 +1,20 @@
-﻿using Unity.FPS.Game;
+using Unity.FPS.Game;
 using UnityEngine;
 
 namespace Unity.FPS.Gameplay
 {
+    // ============================================================================
+    // ProjectileChargeParameters — модификация параметров снаряда по силе зарядки.
+    //
+    // Идея: один и тот же префаб снаряда может вылетать с разной силой.
+    // Это компонент-«крышка», который при OnShoot читает InitialCharge (0..1)
+    // и переписывает Damage/Radius/Speed/Gravity на ProjectileStandard.
+    //
+    // Так у одного снаряда могут быть «слабый» и «мощный» варианты — без копий префаба.
+    // ============================================================================
     public class ProjectileChargeParameters : MonoBehaviour
     {
+        // Min — слабый выстрел, Max — заряженный полностью.
         public MinMaxFloat Damage;
         public MinMaxFloat Radius;
         public MinMaxFloat Speed;
@@ -13,6 +23,7 @@ namespace Unity.FPS.Gameplay
 
         ProjectileBase m_ProjectileBase;
 
+        // OnEnable вместо Awake — потому что снаряд пуленный, и подписаться надо при каждой выдаче.
         void OnEnable()
         {
             m_ProjectileBase = GetComponent<ProjectileBase>();
@@ -21,6 +32,9 @@ namespace Unity.FPS.Gameplay
 
             m_ProjectileBase.OnShoot += OnShoot;
         }
+
+        // Замечание: тут НЕТ OnDisable -= OnShoot — это потенциальная утечка подписки.
+        // (можно поправить, если будут проблемы при возврате в пул).
 
         void OnShoot()
         {
